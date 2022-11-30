@@ -1,11 +1,15 @@
 I LOW VOLATILITY ANALYSIS
-    1. Find a list of all tradable cryptocurrencies on Uniswap
+    1. Find a list of all tradable cryptocurrencies on 1inch DONE
     2. Set up a PostgreSQL DB
+    3. Get the json file from 1inch through requests module 
+    4. Clean the data and check data types
+    5. Save data with psycopg2 to local postgreSQL server
+    4. Do a test file to check if the data is there + if the saved data is correct
     2. Get the return for these cryptocurrencies on a daily basis the furthest you can
     3. Do a Sharpe ratio compared to the Bitcoin returns + max dd + vol + analysis in bear/bull market
 
 II CREATE BOT
-    1. Find how to make a trade with Uniswap V3 SDK
+    1. Find how to make a trade with 1inch API
     2. Create file which fetches everyday return data
     3. Create trade
     4. Record trade data in PostgreSQL
