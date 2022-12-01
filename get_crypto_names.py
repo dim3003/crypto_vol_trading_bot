@@ -16,8 +16,8 @@ def get_tokens_1inch(save=0):
     return df
 
 
-get_tokens_1inch(1)
-
+#get_tokens_1inch(1)
+df = pd.read_pickle("token_1inch.pkl")
 
 
 
