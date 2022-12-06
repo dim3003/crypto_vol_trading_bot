@@ -1,8 +1,4 @@
 I LOW VOLATILITY ANALYSIS
-    1. Find a list of all tradable cryptocurrencies on 1inch DONE
-    2. Set up a PostgreSQL DB DONE
-    3. Get the json file from 1inch through requests module DONE 
-    4. Clean the data and check data types
     5 Create table in postgreSQL
     5. Save data with psycopg2 to local postgreSQL server
     
@@ -14,3 +10,16 @@ II CREATE BOT
     2. Create file which fetches everyday return data
     3. Create trade
     4. Record trade data in PostgreSQL
+
+
+SQL COMMANDS:
+
+CREATE TABLE cryptos_1inch (
+    address     CHAR(42),
+    chainId     INT,
+    name        VARCHAR(155),
+    symbol      VARCHAR(6),
+    decimals    INT,
+    logoURI     VARCHAR(255),
+    PRIMARY KEY (address)
+);
