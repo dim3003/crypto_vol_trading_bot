@@ -1,11 +1,11 @@
 I LOW VOLATILITY ANALYSIS
     1. Find a list of all tradable cryptocurrencies on 1inch DONE
     2. Set up a PostgreSQL DB DONE
-    3. Get the json file from 1inch through requests module 
+    3. Get the json file from 1inch through requests module DONE 
     4. Clean the data and check data types
     5 Create table in postgreSQL
     5. Save data with psycopg2 to local postgreSQL server
-    4. Do a test file to check if the data is there + if the saved data is correct
+    
     2. Get the return for these cryptocurrencies on a daily basis the furthest you can
     3. Do a Sharpe ratio compared to the Bitcoin returns + max dd + vol + analysis in bear/bull market
 
