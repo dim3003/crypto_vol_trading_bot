@@ -14,6 +14,8 @@ II CREATE BOT
 
 SQL COMMANDS:
 
+postgresql://dimitriandre:89913003Da@localhost:5432/bot_vol
+
 CREATE TABLE cryptos_1inch (
     address     CHAR(42),
     chainId     INT,

@@ -1,0 +1,2 @@
+#remove environment variables for development
+.env
