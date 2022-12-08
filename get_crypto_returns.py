@@ -1,2 +1,16 @@
+import pandas as pd
 
-#create a class which fetches crypto returns according to a time start and time stop and can store it in postgres
+# Crypto price data fetcher class
+#--------------------------------
+class PriceCrypto:
+    def __init__(self):
+        """
+        Datetime should be YYYY-MM-DD
+        methods:
+        """
+        pass
+    def __str__(self):
+        print("START TIME:  " + "UNDEFINED")
+
+    def getPrice(self):
+        pass
