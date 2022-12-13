@@ -2,28 +2,7 @@ import requests, json
 import pandas as pd
 import os
 import san
-from sqlalchemy import create_engine
-from dotenv import load_dotenv
-
-#loads env variables 
-load_dotenv() 
-
-# establish connections
-conn_string = f"postgresql://{os.environ['POSTGRES_USERNAME']}:{os.environ['POSTGRES_PASSWORD']}:@localhost:5432/bot_vol"
-conn = create_engine(conn_string).connect()
-
-
-def send_to_postgres(df, conn):
-  """
-  Sends the dataframe to the cryptos_1inch table in postgres
-  """
-  df.to_sql('cryptos_1inch', conn, if_exists= 'replace', index=False)
-
-def get_postgres(conn):
-  """
-  gets the data from cryptos_1inch table in postgres
-  """
-  return pd.read_sql('cryptos_1inch', conn)
+import postgres as pg
 
 def get_tokens_1inch(save=0):
     """
@@ -53,14 +32,16 @@ def get_tokens_san():
       mainContractAddress
     }
   }""")
+
   df = pd.DataFrame(san_projects["allProjects"])
   return df
 
-df_json = get_postgres(conn)
+df_json = pg.get_postgres()
+print(df_json.head(1))
 df_san = get_tokens_san()
+print(df_san.head(1))
 
-
-print(df_san)
-
+df = df_json.merge(df_san, how="left", left_on="address", right_on="mainContractAddress", suffixes=('_json', '_san'))
+#print(df)
 
 
