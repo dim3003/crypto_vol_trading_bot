@@ -5,7 +5,25 @@ import san
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 
-load_dotenv() #loads env variables 
+#loads env variables 
+load_dotenv() 
+
+# establish connections
+conn_string = f"postgresql://{os.environ['POSTGRES_USERNAME']}:{os.environ['POSTGRES_PASSWORD']}:@localhost:5432/bot_vol"
+conn = create_engine(conn_string).connect()
+
+
+def send_to_postgres(df, conn):
+  """
+  Sends the dataframe to the cryptos_1inch table in postgres
+  """
+  df.to_sql('cryptos_1inch', conn, if_exists= 'replace', index=False)
+
+def get_postgres(conn):
+  """
+  gets the data from cryptos_1inch table in postgres
+  """
+  return pd.read_sql('cryptos_1inch', conn)
 
 def get_tokens_1inch(save=0):
     """
@@ -22,26 +40,27 @@ def get_tokens_1inch(save=0):
     df.dropna(inplace=True)
     return df
 
-#df = get_tokens_1inch()
+def get_tokens_san():
+  """
+  gets slug and address info on santiment tokens
+  """
+  san_projects = san.graphql.execute_gql("""{
+    allProjects {
+      slug
+      name
+      ticker
+      infrastructure
+      mainContractAddress
+    }
+  }""")
+  df = pd.DataFrame(san_projects["allProjects"])
+  return df
+
+df_json = get_postgres(conn)
+df_san = get_tokens_san()
 
 
-#finds all crypto names
-san_projects = san.graphql.execute_gql("""{
-  allProjects {
-    slug
-    name
-    ticker
-    infrastructure
-    mainContractAddress
-  }
-}""")
-print(san_projects)
+print(df_san)
 
-"""
-# establish connections
-conn_string = f"postgresql://{os.environ['POSTGRES_USERNAME']}:{os.environ['POSTGRES_PASSWORD']}:@localhost:5432/bot_vol"
-conn = create_engine(conn_string).connect()
 
-# converting df to sql
-df.to_sql('cryptos_1inch', conn, if_exists= 'replace', index=False)
-"""
+
