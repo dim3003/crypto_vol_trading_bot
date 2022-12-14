@@ -10,14 +10,14 @@ load_dotenv()
 conn_string = f"postgresql://{os.environ['POSTGRES_USERNAME']}:{os.environ['POSTGRES_PASSWORD']}:@localhost:5432/bot_vol"
 conn = create_engine(conn_string).connect()
 
-def send_to_postgres(df, conn=conn, table_name='cryptos_1inch'):
+def send_to_postgres(df, conn=conn, table_name='cryptos_1inch', index=False):
   """
   Sends the dataframe to the cryptos_1inch table in postgres
   """
-  df.to_sql(table_name, conn, if_exists= 'replace', index=False)
+  df.to_sql(table_name, conn, if_exists= 'replace', index=index)
 
-def get_postgres(conn=conn, table_name='cryptos_1inch'):
+def get_postgres(conn=conn, table_name='cryptos_1inch', index_col=None):
   """
   gets the data from cryptos_1inch table in postgres
   """
-  return pd.read_sql(table_name, conn)
+  return pd.read_sql(table_name, conn, index_col=index_col)

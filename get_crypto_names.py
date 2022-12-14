@@ -19,6 +19,6 @@ def get_tokens_1inch(save=0):
     df.dropna(inplace=True)
     return df
 
-if __name__ == __main__:
+if __name__ == "__main__":
   df = get_tokens_1inch()
   pg.send_to_postgres(df)
