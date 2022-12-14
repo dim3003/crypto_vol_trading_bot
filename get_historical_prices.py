@@ -27,7 +27,10 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
     for i in range(len(df_names)):
         print(50*"=")
         print(df_names.name[i], "coingecko data extraction", i, "/", len(df_names))
-        r = cg.get_coin_market_chart_from_contract_address_by_id(cg_chain_id, df_names.address[0], "USD", 5000)["prices"]
+        try:
+            r = cg.get_coin_market_chart_from_contract_address_by_id(cg_chain_id, df_names.address[i], "USD", 5000)["prices"]
+        except:
+            #add a row with the missing value name
         df_temp = pd.DataFrame(r)
         df_temp.set_index(0, inplace=True)
         df_temp.rename(columns={1: f"{df_names.name[i]}_USD"}, inplace=True)
