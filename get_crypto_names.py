@@ -19,29 +19,6 @@ def get_tokens_1inch(save=0):
     df.dropna(inplace=True)
     return df
 
-def get_tokens_san():
-  """
-  gets slug and address info on santiment tokens
-  """
-  san_projects = san.graphql.execute_gql("""{
-    allProjects {
-      slug
-      name
-      ticker
-      infrastructure
-      mainContractAddress
-    }
-  }""")
-
-  df = pd.DataFrame(san_projects["allProjects"])
-  return df
-
-df_json = pg.get_postgres()
-print(df_json.head(1))
-df_san = get_tokens_san()
-print(df_san.head(1))
-
-df = df_json.merge(df_san, how="left", left_on="address", right_on="mainContractAddress", suffixes=('_json', '_san'))
-#print(df)
-
-
+if __name__ == __main__:
+  df = get_tokens_1inch()
+  pg.send_to_postgres(df)

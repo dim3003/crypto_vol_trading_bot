@@ -16,9 +16,6 @@ cg_chain_id = df_assets[df_assets.chain_identifier == 1].id.values[0]
 #get the data
 df_names = pg.get_postgres()
 
-
-
-
 def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
     """ Gets all of the historical price data from coingecko from a json of cryptocurrency on 1inch"""
 
