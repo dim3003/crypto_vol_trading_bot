@@ -36,10 +36,10 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
     df.index = pd.to_datetime(df.index, unit='ms')
     print(40*"-")
     return df
-
-
-#df = get_prices(df_names)
-#df.to_pickle("df_prices.pkl")
-df = pd.read_pickle("df_prices.pkl")
-df = df.dropna(how="all")
-print(df)
+    
+if __name__ == __main__:
+    df = get_prices(df_names)
+    df = df.dropna(how="all")
+    df.columns = df.columns.str.replace(' ', '')
+    df.columns = df.columns.str.lower()
+    pg.send_to_postgres(df, table_name="hist_prices")
