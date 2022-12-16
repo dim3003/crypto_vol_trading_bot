@@ -3,6 +3,8 @@ import postgres as pg
 import pandas as pd
 import numpy as np
 
+NBR_DAYS = 730 #number of days to keep as data
+
 def total_returns(returns):
     """Gives the total returns with a investment of 1 and the number of periods as a tuple"""
     r = returns + 1
@@ -42,7 +44,7 @@ df = pg.get_postgres(table_name="hist_prices", index_col="index")
 
 #data cleaning
 df.fillna(method="ffill", inplace=True) #adds missing days
-df = df.iloc[len(df)-730:] #keeps only cryptos with 2 year of data
+df = df.iloc[len(df)-NBR_DAYS:] #keeps only cryptos with 2 year of data
 df.dropna(axis=1, inplace=True)
 
 #get returns
@@ -93,6 +95,9 @@ df_high_vol_weights[df_high_vol_weights != 0] = weight
 
 df_high_vol_returns = df_high_vol_weights * df_returns
 df_high_vol_returns = df_high_vol_returns.sum(axis=1)
+
+df_high_vol_returns.drop(df_high_vol_returns[df_high_vol_returns > 0.27].index, inplace=True)
+
 
 print(50*"=")
 r = total_returns(df_high_vol_returns)
