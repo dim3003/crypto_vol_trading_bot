@@ -15,6 +15,7 @@ cg_chain_id = df_assets[df_assets.chain_identifier == 1].id.values[0]
 
 #get the data
 df_names = pg.get_postgres()
+df_names["missingInCoingecko"] = False
 
 def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
     """ Gets all of the historical price data from coingecko from a json of cryptocurrency on 1inch"""
@@ -22,7 +23,7 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
     #create a df with index starting in 2012 as ts
     df = pd.DataFrame(index=pd.date_range(start='1/1/2012', end=date.today()))
     df.index = df.index.values.astype(np.int64) // 10 ** 6
-    
+
     
     for i in range(len(df_names)):
         print(50*"=")
@@ -30,7 +31,10 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
         try:
             r = cg.get_coin_market_chart_from_contract_address_by_id(cg_chain_id, df_names.address[i], "USD", 5000)["prices"]
         except:
-            #add a row with the missing value name
+            print(df_names.name[i], "is missing updating the crypto list...")
+            df_names.missingInCoingecko = True
+            continue
+        
         df_temp = pd.DataFrame(r)
         df_temp.set_index(0, inplace=True)
         df_temp.rename(columns={1: f"{df_names.name[i]}_USD"}, inplace=True)
@@ -46,3 +50,4 @@ if __name__ == "__main__":
     df.columns = df.columns.str.replace(' ', '')
     df.columns = df.columns.str.lower()
     pg.send_to_postgres(df, table_name="hist_prices", index=True)
+    pg.send_to_postgres(df_names)
