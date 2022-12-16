@@ -67,4 +67,11 @@ print(50*"-")
 
 #low vola
 nbr_col = len(df_returns.columns)
-w = round(1 / (math.floor(nbr_col / 2)), 6)
+half_nbr_col = (math.floor(nbr_col / 2))
+weight = round(1 / half_nbr_col, 6)
+df_low_vol_weights = df_rank.copy()
+
+df_low_vol_weights[df_low_vol_weights > half_nbr_col] = 0
+df_low_vol_weights[df_low_vol_weights != 0] = weight
+
+
