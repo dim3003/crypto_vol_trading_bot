@@ -26,13 +26,14 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
 
     
     for i in range(len(df_names)):
-        print(50*"=")
+        print(50*"-")
         print(df_names.name[i], "coingecko data extraction", i, "/", len(df_names))
         try:
             r = cg.get_coin_market_chart_from_contract_address_by_id(cg_chain_id, df_names.address[i], "USD", 5000)["prices"]
         except:
             print(df_names.name[i], "is missing updating the crypto list...")
             df_names.missingInCoingecko = True
+            print("Added.")
             continue
         
         df_temp = pd.DataFrame(r)
