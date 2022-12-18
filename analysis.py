@@ -41,6 +41,7 @@ def HHI(returns):
 
 #get the data from postgres
 df = pg.get_postgres(table_name="hist_prices", index_col="index")
+print(df)
 
 #data cleaning
 df.fillna(method="ffill", inplace=True) #adds missing days
@@ -55,6 +56,8 @@ df_returns.dropna(how="all", inplace=True)
 df_vol = df_returns.rolling(30).std()
 df_vol.dropna(how="all", inplace=True)
 df_returns = df_returns[len(df_returns)-len(df_vol):]
+
+
 
 #ranks crypto according to vola
 df_rank = df_vol.rank(axis=1)
@@ -92,6 +95,7 @@ df_high_vol_weights = df_rank.copy()
 
 df_high_vol_weights[df_high_vol_weights < half_nbr_col] = 0
 df_high_vol_weights[df_high_vol_weights != 0] = weight
+
 
 df_high_vol_returns = df_high_vol_weights * df_returns
 df_high_vol_returns = df_high_vol_returns.sum(axis=1)
