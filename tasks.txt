@@ -1,12 +1,16 @@
 I LOW VOLATILITY ANALYSIS
-    2. get the market cap + price data on coingecko
-    3. get the liquidity of each pair from uniswap
+    1. find market cap to liquidity ratio
+    2. find a way to calculate slippage percentage
+    3. calculate gas fees
+    4. remove gas fee + slippage from returns and recalculate results
+    5. do the metrics to have a nice analysis
 
 II CREATE BOT
     1. Find how to make a trade with 1inch API
-    2. Create file which fetches everyday return data
+    2. Create file which fetches everyday return data + mcap
     3. Create trade
     4. Record trade data in PostgreSQL
+    5. send message in telegram
 
 
 SQL COMMANDS:
