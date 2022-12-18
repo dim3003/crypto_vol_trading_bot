@@ -1,5 +1,4 @@
 I LOW VOLATILITY ANALYSIS
-    1. get the 1inch polygon list of cryptos and save it in postgres
     2. get the market cap + price data on coingecko
     3. get the liquidity of each pair from uniswap
 

@@ -19,42 +19,47 @@ cg_chain_id = df_assets[df_assets.chain_identifier == chain_id].id.values[0]
 
 #get the data
 df_names = pg.get_postgres()
-print(df_names)
 df_names["missingInCoingecko"] = False
 
+def clean_df(df):
+    """ removes na rows and lowercases/removes empty columns name """
+    df.index = pd.to_datetime(df.index, unit='ms')
+    df = df.dropna(how="all")
+    df.columns = df.columns.str.replace(' ', '')
+    df.columns = df.columns.str.lower()
+    return df
+
 def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
-    """ Gets all of the historical price data from coingecko from a json of cryptocurrency on 1inch"""
+    """ Gets all of the historical data from coingecko from a json of cryptocurrency on 1inch"""
 
-    #create a df with index starting in 2012 as ts
-    df = pd.DataFrame(index=pd.date_range(start='1/1/2012', end=date.today()))
-    df.index = df.index.values.astype(np.int64) // 10 ** 6
-
+    #create df with index starting in 2012 as ts for market cap and price
+    df_price = pd.DataFrame(index=pd.date_range(start='1/1/2012', end=date.today()))
+    df_price.index = df_price.index.values.astype(np.int64) // 10 ** 6
     
     for i in range(len(df_names)):
         print(50*"-")
         print(df_names.name[i], "coingecko data extraction", i, "/", len(df_names))
         try:
             r = cg.get_coin_market_chart_from_contract_address_by_id(cg_chain_id, df_names.address[i], "USD", 5000)
-
         except:
             print(df_names.name[i], "is missing updating the crypto list...")
             df_names.missingInCoingecko = True
             print("Added to missing elements.")
             continue
+        df_temp_price = pd.DataFrame(r["prices"])
+        df_temp_price.set_index(0, inplace=True)
+        df_temp_price.rename(columns={1: f"{df_names.name[i]}_USD"}, inplace=True)
+        df_price = df_price.merge(df_temp_price, how="left", left_index=True, right_index=True)
         
-        df_temp = pd.DataFrame(r)
-        df_temp.set_index(0, inplace=True)
-        df_temp.rename(columns={1: f"{df_names.name[i]}_USD"}, inplace=True)
-        df = df.merge(df_temp, how="left", left_index=True, right_index=True)
-    
-    df.index = pd.to_datetime(df.index, unit='ms')
     print(40*"-")
-    return df
+    return df_price
+
+
+
+
     
 if __name__ == "__main__":
-    df = get_prices(df_names)
-    df = df.dropna(how="all")
-    df.columns = df.columns.str.replace(' ', '')
-    df.columns = df.columns.str.lower()
-    pg.send_to_postgres(df, table_name="hist_prices", index=True)
+    df_price = get_prices(df_names)
+    df_price = clean_df(df_price)
+    pg.send_to_postgres(df_price, table_name="hist_prices", index=True)
     pg.send_to_postgres(df_names)
