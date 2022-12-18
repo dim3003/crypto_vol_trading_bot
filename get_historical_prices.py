@@ -4,17 +4,22 @@ import postgres as pg
 from datetime import date, datetime
 from pycoingecko import CoinGeckoAPI
 
+pd.set_option('display.max_rows', 100)
+
+CHAIN =  "Polygon POS"
+
 #set up coingecko API
 cg = CoinGeckoAPI()
 
-#check asset slug for chainId 1 
+#check asset slug for chainId
 assets_cg = cg.get_asset_platforms() 
 df_assets = pd.DataFrame(assets_cg)
-cg_chain_id = df_assets[df_assets.chain_identifier == 1].id.values[0]
-
+chain_id = df_assets[df_assets["name"] == CHAIN].chain_identifier.iloc[0]
+cg_chain_id = df_assets[df_assets.chain_identifier == chain_id].id.values[0]
 
 #get the data
 df_names = pg.get_postgres()
+print(df_names)
 df_names["missingInCoingecko"] = False
 
 def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
@@ -29,11 +34,12 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
         print(50*"-")
         print(df_names.name[i], "coingecko data extraction", i, "/", len(df_names))
         try:
-            r = cg.get_coin_market_chart_from_contract_address_by_id(cg_chain_id, df_names.address[i], "USD", 5000)["prices"]
+            r = cg.get_coin_market_chart_from_contract_address_by_id(cg_chain_id, df_names.address[i], "USD", 5000)
+
         except:
             print(df_names.name[i], "is missing updating the crypto list...")
             df_names.missingInCoingecko = True
-            print("Added.")
+            print("Added to missing elements.")
             continue
         
         df_temp = pd.DataFrame(r)
