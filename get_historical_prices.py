@@ -20,6 +20,11 @@ cg_chain_id = df_assets[df_assets.chain_identifier == chain_id].id.values[0]
 
 #get the data
 df_names = pg.get_postgres()
+#manually adding addresses from coingecko
+df_names.loc[df_names.symbol == "MATIC", "address"] = "0x0000000000000000000000000000000000001010"
+df_names.loc[df_names.symbol == "deUSDC", "address"] = "0xda43bfd7ecc6835aa6f1761ced30b986a574c0d2"
+df_names.loc[df_names.symbol == "NFTY", "address"] = "0xcc081220542a60a8ea7963c4f53d522b503272c1"
+
 df_names["missingInCoingecko"] = False
 cg_coins = cg.get_coins_list(include_platform=True)
 platforms = [item["platforms"] for item in cg_coins]
@@ -29,8 +34,10 @@ df_coins.drop("platforms", axis=1, inplace=True)
 df_coins = pd.concat([df_coins, df_platforms], axis=1)
 df_coins = df_coins.loc[:, ["id", "polygon-pos"]]
 
+
 #add the coingecko id to the df_names df
-df_names = df_names.merge(df_coins, left_on="address", right_on="polygon-pos")
+df_names = df_names.merge(df_coins, how="left", left_on="address", right_on="polygon-pos")
+#print(df_names[df_names.id.isnull()]) #used to look which ones are not on coingecko :/
 
 def clean_df(df):
     """ removes na rows and lowercases/removes empty columns name """
