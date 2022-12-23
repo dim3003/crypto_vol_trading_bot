@@ -19,10 +19,8 @@ def total_returns(returns):
 
 def returns_with_fees(returns, weights):
     """Calculates the returns of a dataframe with the fees associated """
-    #add the gas fees to the weights dataframe
     weights = weights.merge(df_gas_price, how="left", left_index=True, right_index=True)
-    
-
+    weights.ffill(inplace=True)
     pass
 
 def monthly_returns(returns):
@@ -70,22 +68,20 @@ df_returns.dropna(how="all", inplace=True)
 df_gas_price = pd.read_csv("gas_price_gwei.csv") #gas price as csv from https://polygonscan.com/chart/gasprice
 df_gas_price.set_index(pd.to_datetime(df_gas_price["Date(UTC)"]), inplace=True)
 df_gas_price = df_gas_price.iloc[:, 2].rename("wei")
-filter_cols = [col for col in df if col.startswith('') ]
-print(filter_cols)
-df_gas_price = pd.merge(df["ether_usd"], df_gas_price, right_index=True, left_index=True, how="left")
-df_gas_price["gas_fee_usd"] = df_gas_price.ether_usd * df_gas_price.wei * 10e-18 * 21000 #21000 is basic gas limit cost
-print(df_gas_price)
-exit()
+df_gas_price = pd.merge(df["matic_usd"], df_gas_price, right_index=True, left_index=True, how="left")
+df_gas_price["gas_fee_usd"] = df_gas_price.matic_usd * df_gas_price.wei * 10e-18 * 21000 #21000 is basic gas limit cost
+df_gas_price = df_gas_price["gas_fee_usd"].dropna()
+
 
 #get volatility
 df_vol = df_returns.rolling(VOL_WINDOW_DAYS).std()
 df_vol.dropna(how="all", inplace=True)
 df_returns = df_returns[len(df_returns)-len(df_vol):]
-df_gas_price = df_gas_price[len(df_gas_price)-len(df_vol)]
+df_gas_price = df_gas_price[len(df_gas_price)-len(df_vol):]
 
 #ranks crypto according to vola
 df_rank = df_vol.rank(axis=1)
-
+"""
 #wrappedBTC as reference
 print(50*"=")
 df_wBTC = df_returns.loc[:, "wrappedbtc_usd"]
@@ -93,7 +89,7 @@ r = total_returns(df_wBTC)
 print("Wrapped BTC results")
 print("It averaged", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
 print(50*"-")
-
+"""
 #low vola
 nbr_col = len(df_returns.columns)
 half_nbr_col = (math.floor(nbr_col / 2))
@@ -114,7 +110,7 @@ print("Low vol results")
 print("It averaged", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
 print(50*"-")
 
-
+exit()
 #High vola
 df_high_vol_weights = df_rank.copy()
 
