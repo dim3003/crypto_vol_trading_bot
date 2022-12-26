@@ -15,18 +15,26 @@ def total_returns(returns):
     pnl = r.product()
     return (pnl, len(r))
 
-def returns_with_fees(returns, weights, weight):
-    """Calculates the returns of a dataframe with the fees associated """
+def returns_detailed(returns, weights, weight):
+    """
+    Calculates the returns of a dataframe with the liquidity and slippage fees associated 
+    Gives as second argument a pd series with number of trades
+    
+    """
     #get turnover of portfolio for the day in percentage
     weights_calc = weights+1
     df_turnover = weights_calc.pct_change()
     df_turnover[df_turnover!=0] = weight
     df_turnover.iloc[0,:] = 1/len(df_turnover.columns) #sums up to one for turnover
-    df_turnover = df_turnover.sum(axis=1)
+    #get nbr of trades for gas fees calcs
+    df_nbr_trades = df_turnover.copy()
+    df_nbr_trades[df_nbr_trades != 0] = 1
+    df_nbr_trades = df_nbr_trades.sum(axis=1)
     #multiply it with (SLIPPAGE + LIQUID FEE) 
+    df_turnover = df_turnover.sum(axis=1)
     df_fees = df_turnover * (SLIPPAGE_FEE + LIQUIDITY_FEE)
-    df_returns_net = returns - df_turnover
-    return df_returns_net
+    df_returns_net = returns - df_fees
+    return df_returns_net, df_nbr_trades
 
 def monthly_returns(returns):
     pass
@@ -86,7 +94,6 @@ df_gas_price = df_gas_price[len(df_gas_price)-len(df_vol):]
 
 #ranks crypto according to vola
 df_rank = df_vol.rank(axis=1)
-"""
 #wrappedBTC as reference
 print(50*"=")
 df_wBTC = df_returns.loc[:, "wrappedbtc_usd"]
@@ -94,7 +101,7 @@ r = total_returns(df_wBTC)
 print("Wrapped BTC results")
 print("It averaged", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
 print(50*"-")
-"""
+
 #low vola
 nbr_col = len(df_returns.columns)
 half_nbr_col = (math.floor(nbr_col / 2))
@@ -109,10 +116,14 @@ df_low_vol_returns = df_low_vol_returns.sum(axis=1)
 
 print(50*"=")
 r = total_returns(df_low_vol_returns)
-r_net = returns_with_fees(df_low_vol_returns, df_low_vol_weights, weight)
-exit()
-print("Low vol results")
-print("It averaged", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
+r_net, df_nbr_trades = returns_detailed(df_low_vol_returns, df_low_vol_weights, weight)
+r_net_total = total_returns(r_net)
+print("LOW VOLATILITY RESULTS")
+print(50*"-")
+print("NUMBER OF DAYS:", r[1])
+print("NO FEE:", round(r[0]*100 - 100, 2), "%")
+print("LIQUIDITY+SLIPPAGE FEE:", round(r_net_total[0]*100 - 100, 2), "%")
+print("GAS FEES NEEDED:", (df_gas_price * df_nbr_trades).sum(), "USD")
 print(50*"-")
 
 exit()
