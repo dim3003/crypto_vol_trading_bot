@@ -9,19 +9,24 @@ SLIPPAGE_FEE = 0.005 #used the automatic max from 1inch as estimate
 LIQUIDITY_FEE = 0.003 #used the medium fee tier of uniswap as estimate
 VOL_WINDOW_DAYS = 30 #period for volatility calc 
 
-
-
 def total_returns(returns):
     """Gives the total returns with a investment of 1 and the number of periods as a tuple"""
     r = returns + 1
     pnl = r.product()
     return (pnl, len(r))
 
-def returns_with_fees(returns, weights):
+def returns_with_fees(returns, weights, weight):
     """Calculates the returns of a dataframe with the fees associated """
-    weights = weights.merge(df_gas_price, how="left", left_index=True, right_index=True)
-    weights.ffill(inplace=True)
-    pass
+    #get turnover of portfolio for the day in percentage
+    weights_calc = weights+1
+    df_turnover = weights_calc.pct_change()
+    df_turnover[df_turnover!=0] = weight
+    df_turnover.iloc[0,:] = 1/len(df_turnover.columns) #sums up to one for turnover
+    df_turnover = df_turnover.sum(axis=1)
+    #multiply it with (SLIPPAGE + LIQUID FEE) 
+    df_fees = df_turnover * (SLIPPAGE_FEE + LIQUIDITY_FEE)
+    df_returns_net = returns - df_turnover
+    return df_returns_net
 
 def monthly_returns(returns):
     pass
@@ -104,7 +109,7 @@ df_low_vol_returns = df_low_vol_returns.sum(axis=1)
 
 print(50*"=")
 r = total_returns(df_low_vol_returns)
-r_net = returns_with_fees(df_low_vol_returns, df_low_vol_weights)
+r_net = returns_with_fees(df_low_vol_returns, df_low_vol_weights, weight)
 exit()
 print("Low vol results")
 print("It averaged", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
