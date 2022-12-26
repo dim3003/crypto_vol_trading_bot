@@ -98,9 +98,9 @@ df_rank = df_vol.rank(axis=1)
 print(50*"=")
 df_wBTC = df_returns.loc[:, "wrappedbtc_usd"]
 r = total_returns(df_wBTC)
-print("Wrapped BTC results")
-print("It averaged", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
+print("WRAPPED BTC RESULTS")
 print(50*"-")
+print("NO FEE", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
 
 #low vola
 nbr_col = len(df_returns.columns)
@@ -123,10 +123,9 @@ print(50*"-")
 print("NUMBER OF DAYS:", r[1])
 print("NO FEE:", round(r[0]*100 - 100, 2), "%")
 print("LIQUIDITY+SLIPPAGE FEE:", round(r_net_total[0]*100 - 100, 2), "%")
-print("GAS FEES NEEDED:", (df_gas_price * df_nbr_trades).sum(), "USD")
-print(50*"-")
+print("GAS FEES NEEDED:", round((df_gas_price * df_nbr_trades).sum(), 2), "USD")
 
-exit()
+
 #High vola
 df_high_vol_weights = df_rank.copy()
 
@@ -142,6 +141,11 @@ df_high_vol_returns.drop(df_high_vol_returns[df_high_vol_returns > 0.27].index, 
 
 print(50*"=")
 r = total_returns(df_high_vol_returns)
-print("High vol results")
-print("It averaged", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
+r_net, df_nbr_trades = returns_detailed(df_high_vol_returns, df_high_vol_weights, weight)
+r_net_total = total_returns(r_net)
+print("HIGH VOLATILITY RESULTS")
 print(50*"-")
+print("NUMBER OF DAYS:", r[1])
+print("NO FEE:", round(r[0]*100 - 100, 2), "%")
+print("LIQUIDITY+SLIPPAGE FEE:", round(r_net_total[0]*100 - 100, 2), "%")
+print("GAS FEES NEEDED:", round((df_gas_price * df_nbr_trades).sum(), 2), "USD")
