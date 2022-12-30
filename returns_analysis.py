@@ -3,6 +3,7 @@ import postgres as pg
 import pandas as pd
 import numpy as np
 from scipy import stats
+from datetime import datetime, timedelta
 
 NBR_DAYS = 730 #number of days to keep as data
 SLIPPAGE_FEE = 0.005 #used the automatic max from 1inch as estimate
@@ -37,7 +38,22 @@ def returns_detailed(returns, weights, weight):
     return df_returns_net, df_nbr_trades
 
 def monthly_returns(returns):
-    pass
+    #get first date and find first day of next month
+    first = returns.index[0]
+    if int(first.strftime("%d")) != 1:
+        if int(first.strftime("%m")) != 2:
+            first = first + timedelta(days=32)
+            first = first.replace(day=1)
+        else:
+            first = first + timedelta(days=29)
+            first = first.replace(day=1) 
+    print(first)
+
+   
+    print(first) 
+    #get last date and find last day of last month
+    #filter df
+    #average returns over each month 
 
 def volatility(returns):
     pass
@@ -83,7 +99,7 @@ val = val.ravel()
 df_temp = pd.Series(val)
 df_temp[(df_temp > 1) | (df_temp < -1)] = 0
 df_temp = df_temp.values.reshape(og_shape)
-df_returns = pd.DataFrame(df_temp, columns = df_returns.columns)
+df_returns = pd.DataFrame(df_temp, columns = df_returns.columns, index=df_returns.index)
 
 #df_gas_price
 df_gas_price = pd.read_csv("gas_price_gwei.csv") #gas price as csv from https://polygonscan.com/chart/gasprice
@@ -110,7 +126,7 @@ r = total_returns(df_wBTC)
 print("WRAPPED BTC RESULTS")
 print(50*"-")
 print("NO FEE", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
-
+monthly_returns(df_wBTC)
 #low vola
 nbr_col = len(df_returns.columns)
 half_nbr_col = (math.floor(nbr_col / 2))
