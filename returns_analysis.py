@@ -76,6 +76,14 @@ df.dropna(axis=1, inplace=True)
 #get returns
 df_returns = df.pct_change()
 df_returns.dropna(how="all", inplace=True)
+#change returns outliers to 0
+val = df_returns.values
+og_shape = val.shape
+val = val.ravel()
+df_temp = pd.Series(val)
+df_temp[(df_temp > 0.3) | (df_temp < -0.3)] = 0
+df_temp = df_temp.values.reshape(og_shape)
+df_returns = pd.DataFrame(df_temp, columns = df_returns.columns)
 
 #df_gas_price
 df_gas_price = pd.read_csv("gas_price_gwei.csv") #gas price as csv from https://polygonscan.com/chart/gasprice
@@ -94,6 +102,7 @@ df_gas_price = df_gas_price[len(df_gas_price)-len(df_vol):]
 
 #ranks crypto according to vola
 df_rank = df_vol.rank(axis=1)
+
 #wrappedBTC as reference
 print(50*"=")
 df_wBTC = df_returns.loc[:, "wrappedbtc_usd"]
@@ -136,7 +145,7 @@ df_high_vol_weights[df_high_vol_weights != 0] = weight
 df_high_vol_returns = df_high_vol_weights * df_returns
 df_high_vol_returns = df_high_vol_returns.sum(axis=1)
 
-df_high_vol_returns.drop(df_high_vol_returns[df_high_vol_returns > 0.27].index, inplace=True)
+df_high_vol_returns.drop(df_high_vol_returns[df_high_vol_returns > 0.27].index, inplace=True) #REMOVE THIS AND DO IT BEFORE IN THE RETURNS THINGY
 
 
 print(50*"=")
