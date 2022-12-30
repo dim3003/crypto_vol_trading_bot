@@ -81,7 +81,7 @@ val = df_returns.values
 og_shape = val.shape
 val = val.ravel()
 df_temp = pd.Series(val)
-df_temp[(df_temp > 0.3) | (df_temp < -0.3)] = 0
+df_temp[(df_temp > 1) | (df_temp < -1)] = 0
 df_temp = df_temp.values.reshape(og_shape)
 df_returns = pd.DataFrame(df_temp, columns = df_returns.columns)
 
@@ -132,7 +132,7 @@ print(50*"-")
 print("NUMBER OF DAYS:", r[1])
 print("NO FEE:", round(r[0]*100 - 100, 2), "%")
 print("LIQUIDITY+SLIPPAGE FEE:", round(r_net_total[0]*100 - 100, 2), "%")
-print("GAS FEES NEEDED:", round((df_gas_price * df_nbr_trades).sum(), 2), "USD")
+print("GAS FEES NEEDED:", round((df_gas_price.values * df_nbr_trades).sum(), 2), "USD")
 
 
 #High vola
@@ -157,4 +157,4 @@ print(50*"-")
 print("NUMBER OF DAYS:", r[1])
 print("NO FEE:", round(r[0]*100 - 100, 2), "%")
 print("LIQUIDITY+SLIPPAGE FEE:", round(r_net_total[0]*100 - 100, 2), "%")
-print("GAS FEES NEEDED:", round((df_gas_price * df_nbr_trades).sum(), 2), "USD")
+print("GAS FEES NEEDED:", round((df_gas_price.values * df_nbr_trades).sum(), 2), "USD")
