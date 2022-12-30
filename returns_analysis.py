@@ -1,6 +1,7 @@
 import math
 import postgres as pg
 import pandas as pd
+pd.set_option('display.max_rows', None)
 import numpy as np
 from scipy import stats
 from datetime import datetime, timedelta
@@ -41,19 +42,25 @@ def monthly_returns(returns):
     #get first date and find first day of next month
     first = returns.index[0]
     if int(first.strftime("%d")) != 1:
-        if int(first.strftime("%m")) != 2:
-            first = first + timedelta(days=32)
-            first = first.replace(day=1)
-        else:
-            first = first + timedelta(days=29)
-            first = first.replace(day=1) 
-    print(first)
-
-   
-    print(first) 
+        next_month = first.replace(day=27) + timedelta(days=5)
+        first = next_month - timedelta(days=(next_month.day-1))
     #get last date and find last day of last month
+    last = returns.index[-1]
+    last = last - timedelta(days=last.day)
     #filter df
-    #average returns over each month 
+    returns = returns[(returns.index >= first) & (returns.index <= last)]
+    #average returns over each month
+    df = pd.DataFrame()
+    while len(returns) > 0:
+        next_month = returns.index[0].replace(day=27) + timedelta(days=5)
+        last_day = next_month - timedelta(days=next_month.day)
+        monthly_returns = returns[returns.index <= last_day] + 1
+        monthly_returns = pd.Series(monthly_returns.product() - 1, index=[last_day.strftime("%m/%y")])
+        df = pd.concat([df,monthly_returns])
+        returns = returns[returns.index > last_day]
+    df.rename(columns={0: "average_returns"}, inplace=True)
+    return df
+
 
 def volatility(returns):
     pass
