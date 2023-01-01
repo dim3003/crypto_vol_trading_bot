@@ -3,6 +3,7 @@ import postgres as pg
 import pandas as pd
 pd.set_option('display.max_rows', None)
 import numpy as np
+import termplotlib as tpl
 from scipy import stats
 from datetime import datetime, timedelta
 
@@ -55,7 +56,7 @@ def monthly_returns(returns):
         next_month = returns.index[0].replace(day=27) + timedelta(days=5)
         last_day = next_month - timedelta(days=next_month.day)
         monthly_returns = returns[returns.index <= last_day] + 1
-        monthly_returns = pd.Series(monthly_returns.product() - 1, index=[last_day.strftime("%m/%y")])
+        monthly_returns = pd.Series(monthly_returns.product() - 1, index=[last_day.strftime("%y.%m")])
         df = pd.concat([df,monthly_returns])
         returns = returns[returns.index > last_day]
     df.rename(columns={0: "average_returns"}, inplace=True)
@@ -84,6 +85,9 @@ def informationRatio(returns, bench_returns):
     pass
 
 def HHI(returns):
+    pass
+
+def bear_bull_returns(returns):
     pass
 
 
@@ -133,7 +137,14 @@ r = total_returns(df_wBTC)
 print("WRAPPED BTC RESULTS")
 print(50*"-")
 print("NO FEE", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
-monthly_returns(df_wBTC)
+print(50*"-")
+print("MONTHLY RETURNS")
+df_monthly = monthly_returns(df_wBTC)
+fig = tpl.figure()
+fig.barh(round(df_monthly.average_returns+1,4), df_monthly.index, force_ascii=True)
+fig.show()
+print(50*"-")
+
 #low vola
 nbr_col = len(df_returns.columns)
 half_nbr_col = (math.floor(nbr_col / 2))
@@ -156,6 +167,14 @@ print("NUMBER OF DAYS:", r[1])
 print("NO FEE:", round(r[0]*100 - 100, 2), "%")
 print("LIQUIDITY+SLIPPAGE FEE:", round(r_net_total[0]*100 - 100, 2), "%")
 print("GAS FEES NEEDED:", round((df_gas_price.values * df_nbr_trades).sum(), 2), "USD")
+print(50*"-")
+print("MONTHLY RETURNS")
+df_monthly = monthly_returns(df_low_vol_returns)
+fig = tpl.figure()
+fig.barh(round(df_monthly.average_returns+1,4), df_monthly.index, force_ascii=True)
+fig.show()
+print(50*"-")
+
 
 
 #High vola
@@ -168,9 +187,6 @@ df_high_vol_weights[df_high_vol_weights != 0] = weight
 df_high_vol_returns = df_high_vol_weights * df_returns
 df_high_vol_returns = df_high_vol_returns.sum(axis=1)
 
-df_high_vol_returns.drop(df_high_vol_returns[df_high_vol_returns > 0.27].index, inplace=True) #REMOVE THIS AND DO IT BEFORE IN THE RETURNS THINGY
-
-
 print(50*"=")
 r = total_returns(df_high_vol_returns)
 r_net, df_nbr_trades = returns_detailed(df_high_vol_returns, df_high_vol_weights, weight)
@@ -181,3 +197,10 @@ print("NUMBER OF DAYS:", r[1])
 print("NO FEE:", round(r[0]*100 - 100, 2), "%")
 print("LIQUIDITY+SLIPPAGE FEE:", round(r_net_total[0]*100 - 100, 2), "%")
 print("GAS FEES NEEDED:", round((df_gas_price.values * df_nbr_trades).sum(), 2), "USD")
+print(50*"-")
+print("MONTHLY RETURNS")
+df_monthly = monthly_returns(df_high_vol_returns)
+fig = tpl.figure()
+fig.barh(round(df_monthly.average_returns+1,4), df_monthly.index, force_ascii=True)
+fig.show()
+print(50*"-")
