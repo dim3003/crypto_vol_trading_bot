@@ -68,11 +68,9 @@ def sharpe(returns):
     """
     return round(((total_returns(returns)[0] - 1) - 0.0154) / returns.std(), 4) #0.0154 value is earnings of Compound on 01.01.23
 
-def excReturns(returns, bench_returns):
-    pass
-
 def beta(returns, bench_returns):
-    pass
+    df_cov = pd.concat([returns, bench_returns], axis=1).cov()
+    return round(df_cov.iloc[0, 1] / df_cov.iloc[0,0],4)
 
 def trackingError(returns, bench_returns):
     pass
@@ -135,6 +133,7 @@ print("NO FEE", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
 print("VOLATILITY", round(df_wBTC.std(),4))
 print("MAX DD", df_wBTC.min())
 print("Sharpe", sharpe(df_wBTC))
+print("BETA", beta(df_wBTC, df_wBTC))
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
@@ -169,6 +168,7 @@ print("GAS FEES NEEDED:", round((df_gas_price.values * df_nbr_trades).sum(), 2),
 print("VOLATILITY", round(df_low_vol_returns.std(),4))
 print("MAX DD", df_low_vol_returns.min())
 print("SHARPE", sharpe(df_low_vol_returns))
+print("BETA", beta(df_low_vol_returns, df_wBTC))
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
@@ -203,6 +203,7 @@ print("GAS FEES NEEDED:", round((df_gas_price.values * df_nbr_trades).sum(), 2),
 print("VOLATILITY", round(df_high_vol_returns.std(),4))
 print("MAX DD", df_high_vol_returns.min())
 print("SHARPE", sharpe(df_high_vol_returns))
+print("BETA", beta(df_high_vol_returns, df_wBTC))
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
