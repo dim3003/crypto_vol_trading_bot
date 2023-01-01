@@ -23,7 +23,6 @@ def returns_detailed(returns, weights, weight):
     """
     Calculates the returns of a dataframe with the liquidity and slippage fees associated 
     Gives as second argument a pd series with number of trades
-    
     """
     #get turnover of portfolio for the day in percentage
     weights_calc = weights+1
@@ -63,8 +62,11 @@ def monthly_returns(returns):
     df.rename(columns={0: "average_returns"}, inplace=True)
     return df
 
-def sharpe(returns, benchmark)
-    pass
+def sharpe(returns):
+    """
+    Returns the Sharpe ratio of returns given based on the earning rate of the Compound protocol
+    """
+    return round(((total_returns(returns)[0] - 1) - 0.0154) / returns.std(), 4) #0.0154 value is earnings of Compound on 01.01.23
 
 def excReturns(returns, bench_returns):
     pass
@@ -87,7 +89,6 @@ def bear_bull_returns(returns):
 
 #get the data from postgres
 df = pg.get_postgres(table_name="hist_prices", index_col="index")
-
 
 #data cleaning
 df.fillna(method="ffill", inplace=True) #adds missing days
@@ -133,6 +134,7 @@ print(50*"-")
 print("NO FEE", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
 print("VOLATILITY", round(df_wBTC.std(),4))
 print("MAX DD", df_wBTC.min())
+print("Sharpe", sharpe(df_wBTC))
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
@@ -161,12 +163,12 @@ r_net_total = total_returns(r_net)
 print("LOW VOLATILITY RESULTS")
 print(50*"-")
 print("NUMBER OF DAYS:", r[1])
-print("NO FEE:", round(r[0]*100 - 100, 2), "%")
+print("NO FEE", round(r[0]*100 - 100, 2), "%")
 print("LIQUIDITY+SLIPPAGE FEE:", round(r_net_total[0]*100 - 100, 2), "%")
 print("GAS FEES NEEDED:", round((df_gas_price.values * df_nbr_trades).sum(), 2), "USD")
 print("VOLATILITY", round(df_low_vol_returns.std(),4))
 print("MAX DD", df_low_vol_returns.min())
-
+print("SHARPE", sharpe(df_low_vol_returns))
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
@@ -195,11 +197,12 @@ r_net_total = total_returns(r_net)
 print("HIGH VOLATILITY RESULTS")
 print(50*"-")
 print("NUMBER OF DAYS:", r[1])
-print("NO FEE:", round(r[0]*100 - 100, 2), "%")
+print("NO FEE", round(r[0]*100 - 100, 2), "%")
 print("LIQUIDITY+SLIPPAGE FEE:", round(r_net_total[0]*100 - 100, 2), "%")
 print("GAS FEES NEEDED:", round((df_gas_price.values * df_nbr_trades).sum(), 2), "USD")
 print("VOLATILITY", round(df_high_vol_returns.std(),4))
 print("MAX DD", df_high_vol_returns.min())
+print("SHARPE", sharpe(df_high_vol_returns))
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
