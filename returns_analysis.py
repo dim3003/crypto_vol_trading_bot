@@ -69,17 +69,23 @@ def sharpe(returns):
     return round(((total_returns(returns)[0] - 1) - 0.0154) / returns.std(), 4) #0.0154 value is earnings of Compound on 01.01.23
 
 def beta(returns, bench_returns):
+    """
+    Returns the beta of returns with the benchmark returns
+    """
     df_cov = pd.concat([returns, bench_returns], axis=1).cov()
     return round(df_cov.iloc[0, 1] / df_cov.iloc[0,0],4)
 
 def trackingError(returns, bench_returns):
-    pass
+    """
+    returns the tracking error of returns and of a benchmark returns
+    """
+    return round((returns - bench_returns).std(),4)
 
 def informationRatio(returns, bench_returns):
-    pass
-
-def HHI(returns):
-    pass
+   """
+   Returns the information ratio of returns
+   """
+   pass 
 
 def bear_bull_returns(returns):
     pass
@@ -134,6 +140,7 @@ print("VOLATILITY", round(df_wBTC.std(),4))
 print("MAX DD", df_wBTC.min())
 print("Sharpe", sharpe(df_wBTC))
 print("BETA", beta(df_wBTC, df_wBTC))
+print("TRACKING ERROR", trackingError(df_wBTC, df_wBTC))
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
@@ -169,6 +176,7 @@ print("VOLATILITY", round(df_low_vol_returns.std(),4))
 print("MAX DD", df_low_vol_returns.min())
 print("SHARPE", sharpe(df_low_vol_returns))
 print("BETA", beta(df_low_vol_returns, df_wBTC))
+print("TRACKING ERROR", trackingError(df_low_vol_returns, df_wBTC))
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
@@ -204,6 +212,7 @@ print("VOLATILITY", round(df_high_vol_returns.std(),4))
 print("MAX DD", df_high_vol_returns.min())
 print("SHARPE", sharpe(df_high_vol_returns))
 print("BETA", beta(df_high_vol_returns, df_wBTC))
+print("TRACKING ERROR", trackingError(df_high_vol_returns, df_wBTC))
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
