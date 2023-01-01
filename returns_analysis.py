@@ -11,6 +11,7 @@ NBR_DAYS = 730 #number of days to keep as data
 SLIPPAGE_FEE = 0.005 #used the automatic max from 1inch as estimate
 LIQUIDITY_FEE = 0.003 #used the medium fee tier of uniswap as estimate
 VOL_WINDOW_DAYS = 30 #period for volatility calc 
+MONTHLY_SHOW = 0 #set to one to show monthly returns
 
 def total_returns(returns):
     """Gives the total returns with a investment of 1 and the number of periods as a tuple"""
@@ -62,14 +63,7 @@ def monthly_returns(returns):
     df.rename(columns={0: "average_returns"}, inplace=True)
     return df
 
-
-def volatility(returns):
-    pass
-
-def maxDD(returns):
-    pass
-
-def sharpe(returns, bench_returns):
+def sharpe(returns, benchmark)
     pass
 
 def excReturns(returns, bench_returns):
@@ -137,13 +131,16 @@ r = total_returns(df_wBTC)
 print("WRAPPED BTC RESULTS")
 print(50*"-")
 print("NO FEE", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
-print(50*"-")
-print("MONTHLY RETURNS")
-df_monthly = monthly_returns(df_wBTC)
-fig = tpl.figure()
-fig.barh(round(df_monthly.average_returns+1,4), df_monthly.index, force_ascii=True)
-fig.show()
-print(50*"-")
+print("VOLATILITY", round(df_wBTC.std(),4))
+print("MAX DD", df_wBTC.min())
+if MONTHLY_SHOW != 0:
+    print(50*"-")
+    print("MONTHLY RETURNS")
+    df_monthly = monthly_returns(df_wBTC)
+    fig = tpl.figure()
+    fig.barh(round(df_monthly.average_returns+1,4), df_monthly.index, force_ascii=True)
+    fig.show()
+    print(50*"-")
 
 #low vola
 nbr_col = len(df_returns.columns)
@@ -167,13 +164,17 @@ print("NUMBER OF DAYS:", r[1])
 print("NO FEE:", round(r[0]*100 - 100, 2), "%")
 print("LIQUIDITY+SLIPPAGE FEE:", round(r_net_total[0]*100 - 100, 2), "%")
 print("GAS FEES NEEDED:", round((df_gas_price.values * df_nbr_trades).sum(), 2), "USD")
-print(50*"-")
-print("MONTHLY RETURNS")
-df_monthly = monthly_returns(df_low_vol_returns)
-fig = tpl.figure()
-fig.barh(round(df_monthly.average_returns+1,4), df_monthly.index, force_ascii=True)
-fig.show()
-print(50*"-")
+print("VOLATILITY", round(df_low_vol_returns.std(),4))
+print("MAX DD", df_low_vol_returns.min())
+
+if MONTHLY_SHOW != 0:
+    print(50*"-")
+    print("MONTHLY RETURNS")
+    df_monthly = monthly_returns(df_low_vol_returns)
+    fig = tpl.figure()
+    fig.barh(round(df_monthly.average_returns+1,4), df_monthly.index, force_ascii=True)
+    fig.show()
+    print(50*"-")
 
 
 
@@ -197,10 +198,13 @@ print("NUMBER OF DAYS:", r[1])
 print("NO FEE:", round(r[0]*100 - 100, 2), "%")
 print("LIQUIDITY+SLIPPAGE FEE:", round(r_net_total[0]*100 - 100, 2), "%")
 print("GAS FEES NEEDED:", round((df_gas_price.values * df_nbr_trades).sum(), 2), "USD")
-print(50*"-")
-print("MONTHLY RETURNS")
-df_monthly = monthly_returns(df_high_vol_returns)
-fig = tpl.figure()
-fig.barh(round(df_monthly.average_returns+1,4), df_monthly.index, force_ascii=True)
-fig.show()
-print(50*"-")
+print("VOLATILITY", round(df_high_vol_returns.std(),4))
+print("MAX DD", df_high_vol_returns.min())
+if MONTHLY_SHOW != 0:
+    print(50*"-")
+    print("MONTHLY RETURNS")
+    df_monthly = monthly_returns(df_high_vol_returns)
+    fig = tpl.figure()
+    fig.barh(round(df_monthly.average_returns+1,4), df_monthly.index, force_ascii=True)
+    fig.show()
+    print(50*"-")
