@@ -85,7 +85,7 @@ def informationRatio(returns, bench_returns):
    """
    Returns the information ratio of returns
    """
-   pass 
+   return (total_returns(returns)[0] - total_returns(bench_returns)[0]) / trackingError(returns, bench_returns)
 
 def bear_bull_returns(returns):
     pass
@@ -138,9 +138,10 @@ print(50*"-")
 print("NO FEE", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
 print("VOLATILITY", round(df_wBTC.std(),4))
 print("MAX DD", df_wBTC.min())
-print("Sharpe", sharpe(df_wBTC))
+print(f"{'SHARPE':<15}{sharpe(df_wBTC):>35.4f}")
 print("BETA", beta(df_wBTC, df_wBTC))
 print("TRACKING ERROR", trackingError(df_wBTC, df_wBTC))
+print("INFORMATION RATIO", informationRatio(df_wBTC, df_wBTC))
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
