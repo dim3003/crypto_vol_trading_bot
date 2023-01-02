@@ -126,7 +126,7 @@ df_temp = df_temp.values.reshape(og_shape)
 df_returns = pd.DataFrame(df_temp, columns = df_returns.columns, index=df_returns.index)
 
 #df_gas_price
-df_gas_price = pd.read_csv("gas_price_gwei.csv") #gas price as csv from https://polygonscan.com/chart/gasprice
+df_gas_price = pd.read_csv("gas_price_gwei.csv") #gas price as csv from https://polygonscan.com/chart/gasprice TO BE UPDATED BY USING SELENIUM
 df_gas_price.set_index(pd.to_datetime(df_gas_price["Date(UTC)"]), inplace=True)
 df_gas_price = df_gas_price.iloc[:, 2].rename("wei")
 df_gas_price = pd.merge(df["matic_usd"], df_gas_price, right_index=True, left_index=True, how="left")

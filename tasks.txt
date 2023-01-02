@@ -1,10 +1,11 @@
 II CREATE BOT
-    1. Find how to make a trade with 1inch API
-    2. Create file which fetches everyday return data + mcap
-    3. Create trade
-    4. Record trade data in PostgreSQL
-    5. send message in telegram
-
+    1. create ganache testnet on polygon by forking mainnet
+    2. write simple transaction with 1inch_wrapper in bot.py
+    3. create data fetching for the class
+    4. create order giving in the class
+    5. try it out with a ganache fork
+    6. create tests for daily function
+    7. launch on polygon mainnet 
 
 SQL COMMANDS:
 

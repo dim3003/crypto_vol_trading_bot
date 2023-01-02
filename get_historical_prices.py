@@ -6,7 +6,7 @@ from pycoingecko import CoinGeckoAPI
 
 pd.set_option('display.max_rows', 100)
 
-CHAIN =  "Polygon POS"
+CHAIN = "Polygon POS"
 
 #set up coingecko API
 cg = CoinGeckoAPI()
