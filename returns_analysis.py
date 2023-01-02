@@ -82,11 +82,14 @@ def trackingError(returns, bench_returns):
     return round((returns - bench_returns).std(),4)
 
 def informationRatio(returns, bench_returns):
-   """
-   Returns the information ratio of returns
-   """
-   return (total_returns(returns)[0] - total_returns(bench_returns)[0]) / trackingError(returns, bench_returns)
-
+    """
+    Returns the information ratio of returns
+    """
+    TE = trackingError(returns, bench_returns)
+    if TE != 0:
+       return round((total_returns(returns)[0] - total_returns(bench_returns)[0]) / trackingError(returns, bench_returns))
+    else:
+        return 0
 def bear_bull_returns(returns):
     pass
 
@@ -135,13 +138,14 @@ df_wBTC = df_returns.loc[:, "wrappedbtc_usd"]
 r = total_returns(df_wBTC)
 print("WRAPPED BTC RESULTS")
 print(50*"-")
-print("NO FEE", round(r[0]*100 - 100, 2), "% out of", r[1], "days.")
-print("VOLATILITY", round(df_wBTC.std(),4))
-print("MAX DD", df_wBTC.min())
+print(f"{'NUMBER OF DAYS':<15}{r[1]:>35d}")
+print(f"{'NO FEE':<15}{round(r[0] - 1, 4):>35.2%}")
+print(f"{'VOLATILITY':<15}{round(df_wBTC.std(),4):>35.2%}")
+print(f"{'MAX DD':<15}{df_wBTC.min():>35.2%}")
 print(f"{'SHARPE':<15}{sharpe(df_wBTC):>35.4f}")
-print("BETA", beta(df_wBTC, df_wBTC))
-print("TRACKING ERROR", trackingError(df_wBTC, df_wBTC))
-print("INFORMATION RATIO", informationRatio(df_wBTC, df_wBTC))
+print(f"{'BETA':<15}{beta(df_wBTC, df_wBTC):>35.4f}")
+print(f"{'TRACKING ERROR':<15}{trackingError(df_wBTC, df_wBTC):>35.4f}")
+print(f"{'INFO RATIO':<15}{informationRatio(df_wBTC, df_wBTC):>35.4f}")
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
@@ -169,15 +173,15 @@ r_net, df_nbr_trades = returns_detailed(df_low_vol_returns, df_low_vol_weights, 
 r_net_total = total_returns(r_net)
 print("LOW VOLATILITY RESULTS")
 print(50*"-")
-print("NUMBER OF DAYS:", r[1])
-print("NO FEE", round(r[0]*100 - 100, 2), "%")
-print("LIQUIDITY+SLIPPAGE FEE:", round(r_net_total[0]*100 - 100, 2), "%")
-print("GAS FEES NEEDED:", round((df_gas_price.values * df_nbr_trades).sum(), 2), "USD")
-print("VOLATILITY", round(df_low_vol_returns.std(),4))
-print("MAX DD", df_low_vol_returns.min())
-print("SHARPE", sharpe(df_low_vol_returns))
-print("BETA", beta(df_low_vol_returns, df_wBTC))
-print("TRACKING ERROR", trackingError(df_low_vol_returns, df_wBTC))
+print(f"{'NUMBER OF DAYS':<15}{r[1]:>35d}")
+print(f"{'NO FEE':<15}{round(r[0] - 1, 4):>35.2%}")
+print(f"{'LIQ+SLIP FEE':<15}{round(r_net_total[0] - 1, 4):>35.2%}")
+print(f"{'VOLATILITY':<15}{round(df_low_vol_returns.std(),4):>35.2%}")
+print(f"{'MAX DD':<15}{df_low_vol_returns.min():>35.2%}")
+print(f"{'SHARPE':<15}{sharpe(df_low_vol_returns):>35.4f}")
+print(f"{'BETA':<15}{beta(df_low_vol_returns, df_wBTC):>35.4f}")
+print(f"{'TRACKING ERROR':<15}{trackingError(df_low_vol_returns, df_wBTC):>35.4f}")
+print(f"{'INFO RATIO':<15}{informationRatio(df_low_vol_returns, df_wBTC):>35.4f}")
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
@@ -205,15 +209,15 @@ r_net, df_nbr_trades = returns_detailed(df_high_vol_returns, df_high_vol_weights
 r_net_total = total_returns(r_net)
 print("HIGH VOLATILITY RESULTS")
 print(50*"-")
-print("NUMBER OF DAYS:", r[1])
-print("NO FEE", round(r[0]*100 - 100, 2), "%")
-print("LIQUIDITY+SLIPPAGE FEE:", round(r_net_total[0]*100 - 100, 2), "%")
-print("GAS FEES NEEDED:", round((df_gas_price.values * df_nbr_trades).sum(), 2), "USD")
-print("VOLATILITY", round(df_high_vol_returns.std(),4))
-print("MAX DD", df_high_vol_returns.min())
-print("SHARPE", sharpe(df_high_vol_returns))
-print("BETA", beta(df_high_vol_returns, df_wBTC))
-print("TRACKING ERROR", trackingError(df_high_vol_returns, df_wBTC))
+print(f"{'NUMBER OF DAYS':<15}{r[1]:>35d}")
+print(f"{'NO FEE':<15}{round(r[0] - 1, 4):>35.2%}")
+print(f"{'LIQ+SLIP FEE':<15}{r_net_total[0]-1:>35.2%}")
+print(f"{'VOLATILITY':<15}{round(df_high_vol_returns.std(),4):>35.2%}")
+print(f"{'MAX DD':<15}{df_high_vol_returns.min():>35.2%}")
+print(f"{'SHARPE':<15}{sharpe(df_high_vol_returns):>35.4f}")
+print(f"{'BETA':<15}{beta(df_high_vol_returns, df_wBTC):>35.4f}")
+print(f"{'TRACKING ERROR':<15}{trackingError(df_high_vol_returns, df_wBTC):>35.4f}")
+print(f"{'INFO RATIO':<15}{informationRatio(df_high_vol_returns, df_wBTC):>35.4f}")
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
