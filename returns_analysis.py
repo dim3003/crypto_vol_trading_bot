@@ -90,8 +90,19 @@ def informationRatio(returns, bench_returns):
        return round((total_returns(returns)[0] - total_returns(bench_returns)[0]) / trackingError(returns, bench_returns))
     else:
         return 0
+
 def bear_bull_returns(returns):
-    pass
+    """
+    Separates returns between bull and bear markets and gives a tuple with first bull market returns and then bear market returns
+    Uses this analysis for dates of bull/bear markets https://crypto.com/research/crypto-bear-markets
+    """
+    #get all relevant bear markets as dateranges
+    bear_market_dates = pd.date_range(start="06.26.2019", end="03.12.2020").union(pd.date_range(start="04.14.2021", end="05.17.2021")).union(pd.date_range(start="11.10.2021", end=datetime.today()))
+    #create 2 dataframes by filtering out/in these dateranges in index
+    bear_market_dates = bear_market_dates[(bear_market_dates >= returns.index[0]) & (bear_market_dates <= returns.index[-1])]
+    bear_returns = total_returns(returns.loc[bear_market_dates])[0] - 1
+    bull_returns = total_returns(returns.drop(bear_market_dates))[0] - 1
+    return (bull_returns, bear_returns)
 
 
 #get the data from postgres
@@ -146,6 +157,8 @@ print(f"{'SHARPE':<15}{sharpe(df_wBTC):>35.4f}")
 print(f"{'BETA':<15}{beta(df_wBTC, df_wBTC):>35.4f}")
 print(f"{'TRACKING ERROR':<15}{trackingError(df_wBTC, df_wBTC):>35.4f}")
 print(f"{'INFO RATIO':<15}{informationRatio(df_wBTC, df_wBTC):>35.4f}")
+print(f"{'BULL RETURNS':<15}{bear_bull_returns(df_wBTC)[0]:>35.2%}")
+print(f"{'BEAR RETURNS':<15}{bear_bull_returns(df_wBTC)[1]:>35.2%}")
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
@@ -182,6 +195,8 @@ print(f"{'SHARPE':<15}{sharpe(df_low_vol_returns):>35.4f}")
 print(f"{'BETA':<15}{beta(df_low_vol_returns, df_wBTC):>35.4f}")
 print(f"{'TRACKING ERROR':<15}{trackingError(df_low_vol_returns, df_wBTC):>35.4f}")
 print(f"{'INFO RATIO':<15}{informationRatio(df_low_vol_returns, df_wBTC):>35.4f}")
+print(f"{'BULL RETURNS':<15}{bear_bull_returns(df_low_vol_returns)[0]:>35.2%}")
+print(f"{'BEAR RETURNS':<15}{bear_bull_returns(df_low_vol_returns)[1]:>35.2%}")
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
@@ -218,6 +233,8 @@ print(f"{'SHARPE':<15}{sharpe(df_high_vol_returns):>35.4f}")
 print(f"{'BETA':<15}{beta(df_high_vol_returns, df_wBTC):>35.4f}")
 print(f"{'TRACKING ERROR':<15}{trackingError(df_high_vol_returns, df_wBTC):>35.4f}")
 print(f"{'INFO RATIO':<15}{informationRatio(df_high_vol_returns, df_wBTC):>35.4f}")
+print(f"{'BULL RETURNS':<15}{bear_bull_returns(df_high_vol_returns)[0]:>35.2%}")
+print(f"{'BEAR RETURNS':<15}{bear_bull_returns(df_high_vol_returns)[1]:>35.2%}")
 if MONTHLY_SHOW != 0:
     print(50*"-")
     print("MONTHLY RETURNS")
