@@ -42,7 +42,7 @@ class Analyzer():
         df_temp = df_temp.values.reshape(og_shape)
         df_returns = pd.DataFrame(df_temp, columns = df_returns.columns, index=df_returns.index)
         #remove returns used for calculating the volatility
-        df_returns = df_returns[len(df_returns)-self.vol_window_days:]
+        df_returns = df_returns[self.vol_window_days - 1:]
         return df_returns
     
     def get_strat_returns(self):
@@ -157,7 +157,6 @@ df = pg.get_postgres(table_name="hist_prices", index_col="index")
 
 #BTC only analysis
 btc = Analyzer(df)
-print(btc.returns)
 exit()
 #df_gas_price
 df_gas_price = pd.read_csv("gas_price_gwei.csv") #gas price as csv from https://polygonscan.com/chart/gasprice TO BE UPDATED BY USING SELENIUM
