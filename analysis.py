@@ -20,14 +20,14 @@ class Analyzer():
         self.slippage_fee = slippage_fee
         self.liquidity_fee = liquidity_fee
         self.vol_window_days = vol_window_days
-        self.returns = self.get_clean_returns(df_price)
+        self.returns = self.get_clean_returns()
 
     def get_clean_returns(self):
         """ Gives back the cleaned returns with the df price given """
-        df = self.df_price
+        df = self.df_price.copy()
         #data cleaning
         df.fillna(method="ffill", inplace=True) #adds missing days
-        df = df.iloc[len(df)-NBR_DAYS:] #keeps only cryptos with 2 year of data
+        df = df.iloc[len(df)-self.nbr_days:] #keeps only cryptos with 2 year of data
         df.dropna(axis=1, inplace=True)
         #get returns
         df_returns = df.pct_change()
@@ -116,7 +116,7 @@ class Analyzer():
         """
         TE = trackingError(returns, bench_returns)
         if TE != 0:
-        return round((total_returns(returns)[0] - total_returns(bench_returns)[0]) / trackingError(returns, bench_returns))
+            return round((total_returns(returns)[0] - total_returns(bench_returns)[0]) / trackingError(returns, bench_returns))
         else:
             return 0
 
@@ -141,7 +141,8 @@ df = pg.get_postgres(table_name="hist_prices", index_col="index")
 #BTC only analysis
 
 btc = Analyzer(df)
-
+print(btc.returns)
+exit()
 #df_gas_price
 df_gas_price = pd.read_csv("gas_price_gwei.csv") #gas price as csv from https://polygonscan.com/chart/gasprice TO BE UPDATED BY USING SELENIUM
 df_gas_price.set_index(pd.to_datetime(df_gas_price["Date(UTC)"]), inplace=True)
