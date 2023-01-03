@@ -14,15 +14,16 @@ VOL_WINDOW_DAYS = 30 #period for volatility calc
 MONTHLY_SHOW = 0 #set to one to show monthly returns
 
 class Analyzer():
-    def __init__(self, df_price, nbr_days=NBR_DAYS, slippage_fee=SLIPPAGE_FEE, liquidity_fee=LIQUIDITY_FEE, vol_window_days=VOL_WINDOW_DAYS):
+    def __init__(self, df_price, strategy="BTC", nbr_days=NBR_DAYS, slippage_fee=SLIPPAGE_FEE, liquidity_fee=LIQUIDITY_FEE, vol_window_days=VOL_WINDOW_DAYS):
         self.df_price = df_price
+        self.strategy = strategy
         self.nbr_days = nbr_days
         self.slippage_fee = slippage_fee
         self.liquidity_fee = liquidity_fee
         self.vol_window_days = vol_window_days
-        self.returns = self.get_clean_returns()
+        self.returns = self.get_strat_returns()
 
-    def get_clean_returns(self):
+    def clean_returns(self):
         """ Gives back the cleaned returns with the df price given """
         df = self.df_price.copy()
         #data cleaning
@@ -40,13 +41,29 @@ class Analyzer():
         df_temp[(df_temp > 1) | (df_temp < -1)] = 0
         df_temp = df_temp.values.reshape(og_shape)
         df_returns = pd.DataFrame(df_temp, columns = df_returns.columns, index=df_returns.index)
+        #remove returns used for calculating the volatility
+        df_returns = df_returns[len(df_returns)-self.vol_window_days:]
         return df_returns
+    
+    def get_strat_returns(self):
+        df_returns = self.clean_returns()
+        #BTC only
+        if self.strategy == "BTC":
+            self.weight = 1
+            df_temp = df_returns.copy()
+            for col in df_returns.columns:
+                df_temp[col] = 0
+            df_temp["wrappedbtc_usd"] = 1
+            self.weights = df_temp
+        #calculate returns
+        returns = df_returns * self.weights
+        return returns.sum(axis=1)
 
-    def total_returns(returns):
-        """Gives the total returns with a investment of 1 and the number of periods as a tuple"""
-        r = returns + 1
-        pnl = r.product()
-        return (pnl, len(r))
+    def total_returns(self):
+        """Gives the total returns and the number of periods as a tuple"""
+        r = self.returns + 1
+        pnl = r.product() - 1
+        return pnl
 
     def returns_detailed(returns, weights, weight):
         """
@@ -139,7 +156,6 @@ class Analyzer():
 df = pg.get_postgres(table_name="hist_prices", index_col="index")
 
 #BTC only analysis
-
 btc = Analyzer(df)
 print(btc.returns)
 exit()
@@ -155,7 +171,6 @@ df_gas_price = df_gas_price["gas_fee_usd"].dropna()
 #get volatility
 df_vol = df_returns.rolling(VOL_WINDOW_DAYS).std()
 df_vol.dropna(how="all", inplace=True)
-df_returns = df_returns[len(df_returns)-len(df_vol):]
 df_gas_price = df_gas_price[len(df_gas_price)-len(df_vol):]
 
 #ranks crypto according to vola
