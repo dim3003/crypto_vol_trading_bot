@@ -14,14 +14,44 @@ VOL_WINDOW_DAYS = 30 #period for volatility calc
 MONTHLY_SHOW = 0 #set to one to show monthly returns
 
 class Analyzer():
-    def __init__(self, df_price, strategy="BTC", nbr_days=NBR_DAYS, slippage_fee=SLIPPAGE_FEE, liquidity_fee=LIQUIDITY_FEE, vol_window_days=VOL_WINDOW_DAYS):
+    def __init__(self, df_price, bench_returns=0, strategy="BTC", nbr_days=NBR_DAYS, slippage_fee=SLIPPAGE_FEE, liquidity_fee=LIQUIDITY_FEE, vol_window_days=VOL_WINDOW_DAYS):
         self.df_price = df_price
         self.strategy = strategy
-        self.nbr_days = nbr_days
+        self.nbr_days = nbr_days - vol_window_days
         self.slippage_fee = slippage_fee
         self.liquidity_fee = liquidity_fee
         self.vol_window_days = vol_window_days
         self.returns = self.get_strat_returns()
+        self.nbr_trades, self.returns_net = self.returns_detailed()
+        self.monthly_returns = self.monthly_returns()
+        if strategy != "BTC":
+            self.bench_returns = bench_returns
+        else:   
+            self.bench_returns = self.returns
+    
+    def __str__(self, monthly_show=0):
+        print(50*"=")
+        print(f"{self.strategy} RESULTS")
+        print(50*"-")
+        print(f"{'NUMBER OF DAYS':<15}{self.nbr_days:>35d}")
+        print(f"{'NO FEE':<15}{self.total_returns():>35.2%}")
+        print(f"{'VOLATILITY':<15}{self.returns.std():>35.2%}")
+        print(f"{'MAX DD':<15}{self.returns.min():>35.2%}")
+        print(f"{'SHARPE':<15}{self.sharpe():>35.4f}")
+        print(f"{'BETA':<15}{self.beta():>35.4f}")
+        print(f"{'TRACKING ERROR':<15}{self.trackingError():>35.4f}")
+        print(f"{'INFO RATIO':<15}{self.informationRatio():>35.4f}")
+        print(f"{'BULL RETURNS':<15}{self.bear_bull_returns()[0]:>35.2%}")
+        print(f"{'BEAR RETURNS':<15}{self.bear_bull_returns()[1]:>35.2%}")
+        if monthly_show != 0:
+            print(50*"-")
+            print("MONTHLY RETURNS")
+            df_monthly = self.monthly_returns()
+            fig = tpl.figure()
+            fig.barh(round(df_monthly.average_returns+1,4), df_monthly.index, force_ascii=True)
+            fig.show()
+        print(50*"-")
+        return ""
 
     def clean_returns(self):
         """ Gives back the cleaned returns with the df price given """
@@ -59,10 +89,14 @@ class Analyzer():
         returns = df_returns * self.weights
         return returns.sum(axis=1)
 
-    def total_returns(self):
+    def total_returns(self, returns=[]):
         """Gives the total returns and the number of periods as a tuple"""
-        r = self.returns + 1
-        pnl = r.product() - 1
+        if len(returns) == 0:
+            r = self.returns + 1
+            pnl = r.product() - 1
+        else:
+            r = returns + 1
+            pnl = r.product() - 1 
         return pnl
 
     def returns_detailed(self):
@@ -71,9 +105,9 @@ class Analyzer():
         Gives as second argument a pd series with number of trades
         """
         #get turnover of portfolio for the day in percentage
-        weights_calc = weights+1
+        weights_calc = self.weights+1
         df_turnover = weights_calc.pct_change()
-        df_turnover[df_turnover!=0] = weight
+        df_turnover[df_turnover!=0] = self.weight
         if self.strategy == "BTC":
             df_turnover.iloc[0,:] = 0
             df_turnover.iloc[0,0] = 1
@@ -82,14 +116,16 @@ class Analyzer():
         #get nbr of trades for gas fees calcs
         df_nbr_trades = df_turnover.copy()
         df_nbr_trades[df_nbr_trades != 0] = 1
-        self.nbr_trades = df_nbr_trades.sum(axis=1)
+        df_nbr_trades = df_nbr_trades.sum(axis=1)
         #multiply it with (SLIPPAGE + LIQUID FEE) 
         df_turnover = df_turnover.sum(axis=1)
         df_fees = df_turnover * (self.slippage_fee + self.liquidity_fee)
-        self.returns_net = returns - df_fees
+        df_returns_net = self.returns - df_fees
+        return (df_nbr_trades, df_returns_net)
 
-    def monthly_returns(returns):
+    def monthly_returns(self):
         #get first date and find first day of next month
+        returns = self.returns
         first = returns.index[0]
         if int(first.strftime("%d")) != 1:
             next_month = first.replace(day=27) + timedelta(days=5)
@@ -111,36 +147,36 @@ class Analyzer():
         df.rename(columns={0: "average_returns"}, inplace=True)
         return df
 
-    def sharpe(returns):
+    def sharpe(self):
         """
         Returns the Sharpe ratio of returns given based on the earning rate of the Compound protocol
         """
-        return round(((total_returns(returns)[0] - 1) - 0.0154) / returns.std(), 4) #0.0154 value is earnings of Compound on 01.01.23
+        return round(((self.total_returns() - 1) - 0.0154) / self.returns.std(), 4) #0.0154 value is earnings of Compound on 01.01.23
 
-    def beta(returns, bench_returns):
+    def beta(self):
         """
         Returns the beta of returns with the benchmark returns
         """
-        df_cov = pd.concat([returns, bench_returns], axis=1).cov()
+        df_cov = pd.concat([self.returns, self.bench_returns], axis=1).cov()
         return round(df_cov.iloc[0, 1] / df_cov.iloc[0,0],4)
 
-    def trackingError(returns, bench_returns):
+    def trackingError(self):
         """
         returns the tracking error of returns and of a benchmark returns
         """
-        return round((returns - bench_returns).std(),4)
+        return round((self.returns - self.bench_returns).std(),4)
 
-    def informationRatio(returns, bench_returns):
+    def informationRatio(self):
         """
         Returns the information ratio of returns
         """
-        TE = trackingError(returns, bench_returns)
+        TE = self.trackingError()
         if TE != 0:
-            return round((total_returns(returns)[0] - total_returns(bench_returns)[0]) / trackingError(returns, bench_returns))
+            return round((total_returns(self.returns) - total_returns(self.bench_returns)) / TE)
         else:
             return 0
 
-    def bear_bull_returns(returns):
+    def bear_bull_returns(self):
         """
         Separates returns between bull and bear markets and gives a tuple with first bull market returns and then bear market returns
         Uses this analysis for dates of bull/bear markets https://crypto.com/research/crypto-bear-markets
@@ -148,10 +184,14 @@ class Analyzer():
         #get all relevant bear markets as dateranges
         bear_market_dates = pd.date_range(start="06.26.2019", end="03.12.2020").union(pd.date_range(start="04.14.2021", end="05.17.2021")).union(pd.date_range(start="11.10.2021", end=datetime.today()))
         #create 2 dataframes by filtering out/in these dateranges in index
+        returns = self.returns
         bear_market_dates = bear_market_dates[(bear_market_dates >= returns.index[0]) & (bear_market_dates <= returns.index[-1])]
-        bear_returns = total_returns(returns.loc[bear_market_dates])[0] - 1
-        bull_returns = total_returns(returns.drop(bear_market_dates))[0] - 1
+        bear_returns = self.total_returns(returns=returns.loc[bear_market_dates]) - 1
+        bull_returns = self.total_returns(returns=returns.drop(bear_market_dates)) - 1
         return (bull_returns, bear_returns)
+
+    def gas_fee(self):
+        pass
 
 
 
@@ -160,6 +200,8 @@ df = pg.get_postgres(table_name="hist_prices", index_col="index")
 
 #BTC only analysis
 btc = Analyzer(df)
+print(btc.returns)
+print(btc)
 exit()
 #df_gas_price
 df_gas_price = pd.read_csv("gas_price_gwei.csv") #gas price as csv from https://polygonscan.com/chart/gasprice TO BE UPDATED BY USING SELENIUM
