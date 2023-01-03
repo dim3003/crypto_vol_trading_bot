@@ -65,7 +65,7 @@ class Analyzer():
         pnl = r.product() - 1
         return pnl
 
-    def returns_detailed(returns, weights, weight):
+    def returns_detailed(self):
         """
         Calculates the returns of a dataframe with the liquidity and slippage fees associated 
         Gives as second argument a pd series with number of trades
@@ -74,16 +74,19 @@ class Analyzer():
         weights_calc = weights+1
         df_turnover = weights_calc.pct_change()
         df_turnover[df_turnover!=0] = weight
-        df_turnover.iloc[0,:] = 1/len(df_turnover.columns) #sums up to one for turnover
+        if self.strategy == "BTC":
+            df_turnover.iloc[0,:] = 0
+            df_turnover.iloc[0,0] = 1
+        else:
+            pass #FIRST ROW TURNOVER TO BE DONE FOR OTHER STRATEGIES 
         #get nbr of trades for gas fees calcs
         df_nbr_trades = df_turnover.copy()
         df_nbr_trades[df_nbr_trades != 0] = 1
-        df_nbr_trades = df_nbr_trades.sum(axis=1)
+        self.nbr_trades = df_nbr_trades.sum(axis=1)
         #multiply it with (SLIPPAGE + LIQUID FEE) 
         df_turnover = df_turnover.sum(axis=1)
-        df_fees = df_turnover * (SLIPPAGE_FEE + LIQUIDITY_FEE)
-        df_returns_net = returns - df_fees
-        return df_returns_net, df_nbr_trades
+        df_fees = df_turnover * (self.slippage_fee + self.liquidity_fee)
+        self.returns_net = returns - df_fees
 
     def monthly_returns(returns):
         #get first date and find first day of next month
