@@ -43,6 +43,7 @@ class Analyzer():
         print(f"{'INFO RATIO':<15}{self.informationRatio():>35.4f}")
         print(f"{'BULL RETURNS':<15}{self.bear_bull_returns()[0]:>35.2%}")
         print(f"{'BEAR RETURNS':<15}{self.bear_bull_returns()[1]:>35.2%}")
+        print(f"{'TOTAL GAS FEES USD':<20}{self.gas_fee():>30.4f}")
         if monthly_show != 0:
             print(50*"-")
             print("MONTHLY RETURNS")
@@ -191,8 +192,23 @@ class Analyzer():
         return (bull_returns, bear_returns)
 
     def gas_fee(self):
-        pass
-
+        """
+        Determines the gas price which will be needed for all of the transactions
+        Defaults to the Polygon network IF USED FOR OTHERN CHAINS IT SHOULD BE REWORKED
+        """
+        #df_gas_price cleaning
+        df_gas_price = pd.read_csv("gas_price_gwei.csv") #gas price as csv from https://polygonscan.com/chart/gasprice TO BE UPDATED BY USING SELENIUM
+        df_gas_price.set_index(pd.to_datetime(df_gas_price["Date(UTC)"]), inplace=True)
+        df_gas_price = df_gas_price.iloc[:, 2].rename("wei")
+        df_gas_price = pd.merge(self.df_price["matic_usd"], df_gas_price, right_index=True, left_index=True, how="left")
+        df_gas_price["gas_fee_usd"] = df_gas_price.matic_usd * df_gas_price.wei * 10e-18 * 21000 #21000 is basic gas limit cost
+        df_gas_price = df_gas_price["gas_fee_usd"].dropna()
+        #combine with the number of trades
+        df_nbr_trades = pd.DataFrame(self.nbr_trades, index=self.nbr_trades.index, columns=["nbr_trades"])
+        df_gas_price = df_nbr_trades.merge(df_gas_price, how="left", left_index=True, right_index=True)
+        df_gas_price.fillna(method="ffill", inplace=True)
+        df_gas_price["total_usd"] = df_gas_price["nbr_trades"] * df_gas_price["gas_fee_usd"]
+        return df_gas_price.total_usd.sum()
 
 
 #get the data from postgres
@@ -203,13 +219,7 @@ btc = Analyzer(df)
 print(btc.returns)
 print(btc)
 exit()
-#df_gas_price
-df_gas_price = pd.read_csv("gas_price_gwei.csv") #gas price as csv from https://polygonscan.com/chart/gasprice TO BE UPDATED BY USING SELENIUM
-df_gas_price.set_index(pd.to_datetime(df_gas_price["Date(UTC)"]), inplace=True)
-df_gas_price = df_gas_price.iloc[:, 2].rename("wei")
-df_gas_price = pd.merge(df["matic_usd"], df_gas_price, right_index=True, left_index=True, how="left")
-df_gas_price["gas_fee_usd"] = df_gas_price.matic_usd * df_gas_price.wei * 10e-18 * 21000 #21000 is basic gas limit cost
-df_gas_price = df_gas_price["gas_fee_usd"].dropna()
+
 
 
 #get volatility
