@@ -12,15 +12,18 @@ SLIPPAGE_FEE = 0.005 #used the automatic max from 1inch as estimate
 LIQUIDITY_FEE = 0.003 #used the medium fee tier of uniswap as estimate
 VOL_WINDOW_DAYS = 30 #period for volatility calc 
 MONTHLY_SHOW = 0 #set to one to show monthly returns
+PERCENTAGE_TAKEN = 50 #the percentage of low and high volatility cryptocurrencies taken in the data for low/high vol strats
 
 class Analyzer():
-    def __init__(self, df_price, bench_returns=0, strategy="BTC", nbr_days=NBR_DAYS, slippage_fee=SLIPPAGE_FEE, liquidity_fee=LIQUIDITY_FEE, vol_window_days=VOL_WINDOW_DAYS):
+    def __init__(self, df_price, bench_returns=0, strategy="BTC", nbr_days=NBR_DAYS, slippage_fee=SLIPPAGE_FEE, liquidity_fee=LIQUIDITY_FEE, vol_window_days=VOL_WINDOW_DAYS, cryptos_taken_percentage=PERCENTAGE_TAKEN):
         self.df_price = df_price
         self.strategy = strategy
         self.nbr_days = nbr_days - vol_window_days
         self.slippage_fee = slippage_fee
         self.liquidity_fee = liquidity_fee
         self.vol_window_days = vol_window_days
+        self.cryptos_taken_percentage = cryptos_taken_percentage
+        self.returns_raw, self.volatility = self.clean_returns()
         self.returns = self.get_strat_returns()
         self.nbr_trades, self.returns_net = self.returns_detailed()
         self.monthly_returns = self.monthly_returns()
@@ -35,6 +38,7 @@ class Analyzer():
         print(50*"-")
         print(f"{'NUMBER OF DAYS':<15}{self.nbr_days:>35d}")
         print(f"{'NO FEE':<15}{self.total_returns():>35.2%}")
+        print(f"{'LIQ+SLIP FEE':<15}{self.total_returns(self.returns_detailed()[1]):>35.2%}")
         print(f"{'VOLATILITY':<15}{self.returns.std():>35.2%}")
         print(f"{'MAX DD':<15}{self.returns.min():>35.2%}")
         print(f"{'SHARPE':<15}{self.sharpe():>35.4f}")
@@ -44,6 +48,9 @@ class Analyzer():
         print(f"{'BULL RETURNS':<15}{self.bear_bull_returns()[0]:>35.2%}")
         print(f"{'BEAR RETURNS':<15}{self.bear_bull_returns()[1]:>35.2%}")
         print(f"{'TOTAL GAS FEES USD':<20}{self.gas_fee():>30.4f}")
+        if self.strategy != "BTC":
+            print(f"{'NBR CRYPTOS TAKEN':<20}{self.nbr_cryptos_left:>30.0f}")
+            print(f"{'TOTAL NBR CRYPTOS':<20}{len(self.volatility.columns):>30.0f}")
         if monthly_show != 0:
             print(50*"-")
             print("MONTHLY RETURNS")
@@ -72,12 +79,14 @@ class Analyzer():
         df_temp[(df_temp > 1) | (df_temp < -1)] = 0
         df_temp = df_temp.values.reshape(og_shape)
         df_returns = pd.DataFrame(df_temp, columns = df_returns.columns, index=df_returns.index)
-        #remove returns used for calculating the volatility
+        #calculate volatility/remove returns unusable
+        df_vol = df_returns.rolling(self.vol_window_days).std()
+        df_vol.dropna(how="all", inplace=True)
         df_returns = df_returns[self.vol_window_days - 1:]
-        return df_returns
+        return df_returns, df_vol
     
     def get_strat_returns(self):
-        df_returns = self.clean_returns()
+        df_returns = self.returns_raw
         #BTC only
         if self.strategy == "BTC":
             self.weight = 1
@@ -86,6 +95,21 @@ class Analyzer():
                 df_temp[col] = 0
             df_temp["wrappedbtc_usd"] = 1
             self.weights = df_temp
+        else:
+            #ranks crypto according to vola
+            df_rank = self.volatility.rank(axis=1)
+            #low volatility
+            nbr_col = len(df_returns.columns)
+            nbr_cryptos_left = (math.floor((self.cryptos_taken_percentage/100)*nbr_col))
+            self.nbr_cryptos_left = nbr_cryptos_left
+            self.weight = round(1 / nbr_cryptos_left, 6)
+            self.weights = df_rank.copy()
+            if self.strategy == "LOW_VOLATILITY":
+                self.weights[self.weights > self.nbr_cryptos_left] = 0
+                self.weights[self.weights != 0] = self.weight
+            elif self.strategy == "HIGH_VOLATILITY":
+                self.weights[self.weights < (nbr_col - self.nbr_cryptos_left)] = 0
+                self.weights[self.weights != 0] = self.weight
         #calculate returns
         returns = df_returns * self.weights
         return returns.sum(axis=1)
@@ -173,7 +197,7 @@ class Analyzer():
         """
         TE = self.trackingError()
         if TE != 0:
-            return round((total_returns(self.returns) - total_returns(self.bench_returns)) / TE)
+            return round((self.total_returns(self.returns) - self.total_returns(self.bench_returns)) / TE)
         else:
             return 0
 
@@ -187,8 +211,8 @@ class Analyzer():
         #create 2 dataframes by filtering out/in these dateranges in index
         returns = self.returns
         bear_market_dates = bear_market_dates[(bear_market_dates >= returns.index[0]) & (bear_market_dates <= returns.index[-1])]
-        bear_returns = self.total_returns(returns=returns.loc[bear_market_dates]) - 1
-        bull_returns = self.total_returns(returns=returns.drop(bear_market_dates)) - 1
+        bear_returns = self.total_returns(returns=returns.loc[bear_market_dates]) 
+        bull_returns = self.total_returns(returns=returns.drop(bear_market_dates))
         return (bull_returns, bear_returns)
 
     def gas_fee(self):
@@ -211,122 +235,16 @@ class Analyzer():
         return df_gas_price.total_usd.sum()
 
 
-#get the data from postgres
-df = pg.get_postgres(table_name="hist_prices", index_col="index")
 
-#BTC only analysis
-btc = Analyzer(df)
-print(btc.returns)
-print(btc)
-exit()
-
-
-
-#get volatility
-df_vol = df_returns.rolling(VOL_WINDOW_DAYS).std()
-df_vol.dropna(how="all", inplace=True)
-df_gas_price = df_gas_price[len(df_gas_price)-len(df_vol):]
-
-#ranks crypto according to vola
-df_rank = df_vol.rank(axis=1)
-
-#wrappedBTC as reference
-print(50*"=")
-df_wBTC = df_returns.loc[:, "wrappedbtc_usd"]
-r = total_returns(df_wBTC)
-print("WRAPPED BTC RESULTS")
-print(50*"-")
-print(f"{'NUMBER OF DAYS':<15}{r[1]:>35d}")
-print(f"{'NO FEE':<15}{round(r[0] - 1, 4):>35.2%}")
-print(f"{'VOLATILITY':<15}{round(df_wBTC.std(),4):>35.2%}")
-print(f"{'MAX DD':<15}{df_wBTC.min():>35.2%}")
-print(f"{'SHARPE':<15}{sharpe(df_wBTC):>35.4f}")
-print(f"{'BETA':<15}{beta(df_wBTC, df_wBTC):>35.4f}")
-print(f"{'TRACKING ERROR':<15}{trackingError(df_wBTC, df_wBTC):>35.4f}")
-print(f"{'INFO RATIO':<15}{informationRatio(df_wBTC, df_wBTC):>35.4f}")
-print(f"{'BULL RETURNS':<15}{bear_bull_returns(df_wBTC)[0]:>35.2%}")
-print(f"{'BEAR RETURNS':<15}{bear_bull_returns(df_wBTC)[1]:>35.2%}")
-if MONTHLY_SHOW != 0:
-    print(50*"-")
-    print("MONTHLY RETURNS")
-    df_monthly = monthly_returns(df_wBTC)
-    fig = tpl.figure()
-    fig.barh(round(df_monthly.average_returns+1,4), df_monthly.index, force_ascii=True)
-    fig.show()
-    print(50*"-")
-
-#low vola
-nbr_col = len(df_returns.columns)
-half_nbr_col = (math.floor(nbr_col / 2))
-weight = round(1 / half_nbr_col, 6)
-df_low_vol_weights = df_rank.copy()
-
-df_low_vol_weights[df_low_vol_weights > half_nbr_col] = 0
-df_low_vol_weights[df_low_vol_weights != 0] = weight
-
-df_low_vol_returns = df_low_vol_weights * df_returns
-df_low_vol_returns = df_low_vol_returns.sum(axis=1)
-
-print(50*"=")
-r = total_returns(df_low_vol_returns)
-r_net, df_nbr_trades = returns_detailed(df_low_vol_returns, df_low_vol_weights, weight)
-r_net_total = total_returns(r_net)
-print("LOW VOLATILITY RESULTS")
-print(50*"-")
-print(f"{'NUMBER OF DAYS':<15}{r[1]:>35d}")
-print(f"{'NO FEE':<15}{round(r[0] - 1, 4):>35.2%}")
-print(f"{'LIQ+SLIP FEE':<15}{round(r_net_total[0] - 1, 4):>35.2%}")
-print(f"{'VOLATILITY':<15}{round(df_low_vol_returns.std(),4):>35.2%}")
-print(f"{'MAX DD':<15}{df_low_vol_returns.min():>35.2%}")
-print(f"{'SHARPE':<15}{sharpe(df_low_vol_returns):>35.4f}")
-print(f"{'BETA':<15}{beta(df_low_vol_returns, df_wBTC):>35.4f}")
-print(f"{'TRACKING ERROR':<15}{trackingError(df_low_vol_returns, df_wBTC):>35.4f}")
-print(f"{'INFO RATIO':<15}{informationRatio(df_low_vol_returns, df_wBTC):>35.4f}")
-print(f"{'BULL RETURNS':<15}{bear_bull_returns(df_low_vol_returns)[0]:>35.2%}")
-print(f"{'BEAR RETURNS':<15}{bear_bull_returns(df_low_vol_returns)[1]:>35.2%}")
-if MONTHLY_SHOW != 0:
-    print(50*"-")
-    print("MONTHLY RETURNS")
-    df_monthly = monthly_returns(df_low_vol_returns)
-    fig = tpl.figure()
-    fig.barh(round(df_monthly.average_returns+1,4), df_monthly.index, force_ascii=True)
-    fig.show()
-    print(50*"-")
-
-
-
-#High vola
-df_high_vol_weights = df_rank.copy()
-
-df_high_vol_weights[df_high_vol_weights < half_nbr_col] = 0
-df_high_vol_weights[df_high_vol_weights != 0] = weight
-
-
-df_high_vol_returns = df_high_vol_weights * df_returns
-df_high_vol_returns = df_high_vol_returns.sum(axis=1)
-
-print(50*"=")
-r = total_returns(df_high_vol_returns)
-r_net, df_nbr_trades = returns_detailed(df_high_vol_returns, df_high_vol_weights, weight)
-r_net_total = total_returns(r_net)
-print("HIGH VOLATILITY RESULTS")
-print(50*"-")
-print(f"{'NUMBER OF DAYS':<15}{r[1]:>35d}")
-print(f"{'NO FEE':<15}{round(r[0] - 1, 4):>35.2%}")
-print(f"{'LIQ+SLIP FEE':<15}{r_net_total[0]-1:>35.2%}")
-print(f"{'VOLATILITY':<15}{round(df_high_vol_returns.std(),4):>35.2%}")
-print(f"{'MAX DD':<15}{df_high_vol_returns.min():>35.2%}")
-print(f"{'SHARPE':<15}{sharpe(df_high_vol_returns):>35.4f}")
-print(f"{'BETA':<15}{beta(df_high_vol_returns, df_wBTC):>35.4f}")
-print(f"{'TRACKING ERROR':<15}{trackingError(df_high_vol_returns, df_wBTC):>35.4f}")
-print(f"{'INFO RATIO':<15}{informationRatio(df_high_vol_returns, df_wBTC):>35.4f}")
-print(f"{'BULL RETURNS':<15}{bear_bull_returns(df_high_vol_returns)[0]:>35.2%}")
-print(f"{'BEAR RETURNS':<15}{bear_bull_returns(df_high_vol_returns)[1]:>35.2%}")
-if MONTHLY_SHOW != 0:
-    print(50*"-")
-    print("MONTHLY RETURNS")
-    df_monthly = monthly_returns(df_high_vol_returns)
-    fig = tpl.figure()
-    fig.barh(round(df_monthly.average_returns+1,4), df_monthly.index, force_ascii=True)
-    fig.show()
-    print(50*"-")
+if __name__ == "__main__":
+    #get the data from postgres
+    df = pg.get_postgres(table_name="hist_prices", index_col="index")
+    #BTC only analysis
+    btc = Analyzer(df)
+    print(btc)
+    #low volatility
+    low_vol = Analyzer(df, bench_returns=btc.returns, strategy="LOW_VOLATILITY")
+    print(low_vol)
+    #high volatility
+    high_vol = Analyzer(df, bench_returns=btc.returns, strategy="HIGH_VOLATILITY")
+    print(high_vol)
