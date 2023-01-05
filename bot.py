@@ -47,7 +47,10 @@ class Bot():
         if not result.__contains__('tokens'):
             return result
         r = result["tokens"]
-        self.tokens = pd.DataFrame(r).T.loc[:, ["name", "address", "decimals"]]
+        r = pd.DataFrame(r).T.loc[:, ["name", "address", "decimals"]]
+        r.name = r.name + "_USD"
+        print(r)
+        self.tokens = r.set_index(r["name"], inplace=True)
         return self.tokens
 
     def healthcheck(self):
@@ -63,6 +66,9 @@ class Bot():
         """
         Calls the swap api endpoint. Allows for the creation of transactions on the 1inch protocol.
         """
+        tokens = self.get_tokens()
+        print(tokens)
+
         url = f'{self.base_url}/{self.version}/{self.chain_id}/swap'
         url = url + f'?fromTokenAddress={fromTokenAddress}&toTokenAddress={toTokenAddress}&amount={amount_in_wei}'
         url = url + f'&fromAddress={send_address}&slippage={slippage}'
@@ -76,5 +82,5 @@ class Bot():
 if __name__ == "__main__":
     bot = Bot()
     print(bot.healthcheck())
-    bot.get_tokens()
-    #df = pg.get_postgres(table_name="hist_prices", index_col="index")
+    df = pg.get_postgres(table_name="hist_prices", index_col="index")
+    bot.get_swap(from_token_name=df.columns[4], to_token_name=df.columns[12], amount=1, slippage=0.05)

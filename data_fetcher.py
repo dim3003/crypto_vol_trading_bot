@@ -83,12 +83,12 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
 
         df_temp_price = pd.DataFrame(r["prices"])
         df_temp_price.set_index(0, inplace=True)
-        df_temp_price.rename(columns={1: f"{df_names.name[i]}_USD"}, inplace=True)
+        df_temp_price.rename(columns={1: f"{df_names.name[i]}"}, inplace=True)
         df_price = df_price.merge(df_temp_price, how="left", left_index=True, right_index=True)
 
         df_temp_mcap = pd.DataFrame(r["market_caps"])
         df_temp_mcap.set_index(0, inplace=True)
-        df_temp_mcap.rename(columns={1: f"{df_names.name[i]}_USD"}, inplace=True)
+        df_temp_mcap.rename(columns={1: f"{df_names.name[i]}"}, inplace=True)
         df_mcap = df_mcap.merge(df_temp_mcap, how="left", left_index=True, right_index=True)
         
     print(40*"-")
