@@ -1,5 +1,6 @@
 II CREATE BOT
-    2. write simple transaction with 1inch_wrapper in bot.py
+    2. write simple transaction with web3.py
+    3. try it with ganache fork
     3. create data fetching for the class
     4. create order giving in the class
     5. try it out with a ganache fork
