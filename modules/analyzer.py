@@ -223,7 +223,7 @@ class Analyzer():
         Defaults to the Polygon network IF USED FOR OTHERN CHAINS IT SHOULD BE REWORKED
         """
         #df_gas_price cleaning
-        df_gas_price = pd.read_csv("gas_price_gwei.csv") #gas price as csv from https://polygonscan.com/chart/gasprice TO BE UPDATED BY USING SELENIUM
+        df_gas_price = pd.read_csv("modules/gas_price_gwei.csv") #gas price as csv from https://polygonscan.com/chart/gasprice TO BE UPDATED BY USING SELENIUM
         df_gas_price.set_index(pd.to_datetime(df_gas_price["Date(UTC)"]), inplace=True)
         df_gas_price = df_gas_price.iloc[:, 2].rename("wei")
         df_gas_price = pd.merge(self.df_price["matic_usd"], df_gas_price, right_index=True, left_index=True, how="left")

@@ -1,4 +1,4 @@
-import postgres as pg
+from modules import postgres as pg
 from modules.analyzer import Analyzer
 
 #get the data from postgres
