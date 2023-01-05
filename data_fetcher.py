@@ -19,10 +19,7 @@ chain_id = df_assets[df_assets["name"] == CHAIN].chain_identifier.iloc[0]
 cg_chain_id = df_assets[df_assets.chain_identifier == chain_id].id.values[0]
 
 #get the data
-df_names = 0
-while len(df_names) == 0:
-    df_names = pg.get_postgres()
-    time.sleep(1)
+df_names = pg.get_postgres()
 
 #manually adding addresses from coingecko
 df_names.loc[df_names.symbol == "MATIC", "address"] = "0x0000000000000000000000000000000000001010"
@@ -63,8 +60,6 @@ def clean_df(df):
     """ removes na rows and lowercases/removes empty columns name """
     df.index = pd.to_datetime(df.index, unit='ms')
     df = df.dropna(how="all")
-    df.columns = df.columns.str.replace(' ', '')
-    df.columns = df.columns.str.lower()
     return df
 
 def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
@@ -74,6 +69,7 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
     df_price = pd.DataFrame(index=pd.date_range(start='1/1/2012', end=date.today()))
     df_price.index = df_price.index.values.astype(np.int64) // 10 ** 6
     df_mcap = df_price.copy()
+    print(df_names)
     for i in range(len(df_names)):
         print(50*"-")
         print(df_names.name[i], "coingecko data extraction", i+1, "/", len(df_names))

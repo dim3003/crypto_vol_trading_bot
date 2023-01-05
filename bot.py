@@ -4,13 +4,6 @@ import requests, json
 from web3 import Web3
 from modules import postgres as pg
 
-"""
-w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
-print(w3.isConnected())
-print(w3.eth.get_block('latest'))
-"""
-
-
 class Bot():
     base_url = 'https://api.1inch.exchange'
 
@@ -44,7 +37,22 @@ class Bot():
             print("HTTPError {}".format(url))
             payload = None
         return payload
-    
+
+    def get_tokens(self):
+        """
+        Calls the token API endpoint
+        """
+        url = f'{self.base_url}/{self.version}/{self.chain_id}/tokens'
+        result = self._get(url)
+        if not result.__contains__('tokens'):
+            return result
+        r = result["tokens"]
+        self.tokens = pd.DataFrame([r.name, r.address, r.decimals], columns=["name", "address", "decimals"], index=r.index)
+        print(self.tokens)
+        df_names.loc[df_names.symbol == "MATIC", "address"] = "0x0000000000000000000000000000000000001010"
+        #create dataframe with address, name, decimals
+        return self.tokens
+
     def healthcheck(self):
         """
         Calls the healthcheck endpoint
@@ -54,10 +62,22 @@ class Bot():
         r = self._get(url)
         return r["status"]
 
-    def swap(self):
-        pass
+    def get_swap(self, from_token_name, to_token_name, amount, slippage, decimal=18):
+        """
+        Calls the swap api endpoint. Allows for the creation of transactions on the 1inch protocol.
+        """
+        url = f'{self.base_url}/{self.version}/{self.chain_id}/swap'
+        url = url + f'?fromTokenAddress={fromTokenAddress}&toTokenAddress={toTokenAddress}&amount={amount_in_wei}'
+        url = url + f'&fromAddress={send_address}&slippage={slippage}'
+        if kwargs is not None:
+            result = self._get(url, params=kwargs)
+        else:
+            result = self._get(url)
+        return result
 
 
 if __name__ == "__main__":
     bot = Bot()
     print(bot.healthcheck())
+    bot.get_tokens()
+    #df = pg.get_postgres(table_name="hist_prices", index_col="index")
