@@ -2,6 +2,8 @@ import unittest
 import numpy as np
 import get_crypto_names as gcn
 
+#check if all tokens from pg database have an address and decimals with get_tokens from bot.py
+
 class Test(unittest.TestCase):
     def test_1inch_colnames(self):
         """

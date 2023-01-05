@@ -63,16 +63,22 @@ class Bot():
         r = self._get(url)
         return r["status"]
 
-    def get_swap(self, from_token_name, to_token_name, amount, slippage, decimal=18):
+    def get_swap(self, from_token_name, to_token_name, amount, slippage, decimal=18, **kwargs):
         """
         Calls the swap api endpoint. Allows for the creation of transactions on the 1inch protocol.
         """
         tokens = self.get_tokens()
-        print(tokens)
+        print(tokens.loc[from_token_name])
+        fromTokenAddress = tokens.loc[from_token_name, "address"]
+        toTokenAddress = tokens.loc[to_token_name, "address"]
+        decimals = tokens.loc[from_token_name, "decimals"]
+        amount_in_wei = amount * 10 ** decimals
+        
 
         url = f'{self.base_url}/{self.version}/{self.chain_id}/swap'
         url = url + f'?fromTokenAddress={fromTokenAddress}&toTokenAddress={toTokenAddress}&amount={amount_in_wei}'
-        url = url + f'&fromAddress={send_address}&slippage={slippage}'
+        print(url)
+        #url = url + f'&fromAddress={send_address}&slippage={slippage}'
         if kwargs is not None:
             result = self._get(url, params=kwargs)
         else:
