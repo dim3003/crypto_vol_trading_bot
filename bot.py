@@ -47,10 +47,7 @@ class Bot():
         if not result.__contains__('tokens'):
             return result
         r = result["tokens"]
-        self.tokens = pd.DataFrame([r.name, r.address, r.decimals], columns=["name", "address", "decimals"], index=r.index)
-        print(self.tokens)
-        df_names.loc[df_names.symbol == "MATIC", "address"] = "0x0000000000000000000000000000000000001010"
-        #create dataframe with address, name, decimals
+        self.tokens = pd.DataFrame(r).T.loc[:, ["name", "address", "decimals"]]
         return self.tokens
 
     def healthcheck(self):
