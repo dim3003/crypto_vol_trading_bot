@@ -1,6 +1,3 @@
-I ANALYSIS
-    1. create a class for df_wBTC
-    2. create a class for low/high additional features
 II CREATE BOT
     2. write simple transaction with 1inch_wrapper in bot.py
     3. create data fetching for the class

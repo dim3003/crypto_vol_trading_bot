@@ -1,16 +1,16 @@
 import pandas as pd
 import numpy as np
-import postgres as pg
+import requests, json, os, time
+from modules import postgres as pg
 from datetime import date, datetime
 from pycoingecko import CoinGeckoAPI
-
 pd.set_option('display.max_rows', 100)
 
+GET_NAMES = 1 #set this to 1 if you want to refetch the cryptos names available from 1inch api
 CHAIN = "Polygon POS"
 
 #set up coingecko API
 cg = CoinGeckoAPI()
-
 
 #check asset slug for chainId
 assets_cg = cg.get_asset_platforms() 
@@ -19,7 +19,11 @@ chain_id = df_assets[df_assets["name"] == CHAIN].chain_identifier.iloc[0]
 cg_chain_id = df_assets[df_assets.chain_identifier == chain_id].id.values[0]
 
 #get the data
-df_names = pg.get_postgres()
+df_names = 0
+while len(df_names) == 0:
+    df_names = pg.get_postgres()
+    time.sleep(1)
+
 #manually adding addresses from coingecko
 df_names.loc[df_names.symbol == "MATIC", "address"] = "0x0000000000000000000000000000000000001010"
 df_names.loc[df_names.symbol == "deUSDC", "address"] = "0xda43bfd7ecc6835aa6f1761ced30b986a574c0d2"
@@ -39,6 +43,22 @@ df_coins = df_coins.loc[:, ["id", "polygon-pos"]]
 df_names = df_names.merge(df_coins, how="left", left_on="address", right_on="polygon-pos")
 #print(df_names[df_names.id.isnull()]) #used to look which ones are not on coingecko :/
 
+def get_tokens_1inch(save=0):
+    """
+    Gets cryptocurrencies available on 1inch from tokenlist.org
+    """
+    r = requests.get("https://api.1inch.io/v5.0/137/tokens")
+    r = r.json()
+    token_data = r['tokens']
+    df = pd.DataFrame(token_data)
+    df = df.T
+    if save == 1:
+        df.to_pickle("token_1inch.pkl")
+    #some data cleaning...
+    df = df.convert_dtypes()
+    df.dropna(how="all", inplace=True)
+    return df
+
 def clean_df(df):
     """ removes na rows and lowercases/removes empty columns name """
     df.index = pd.to_datetime(df.index, unit='ms')
@@ -54,10 +74,9 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
     df_price = pd.DataFrame(index=pd.date_range(start='1/1/2012', end=date.today()))
     df_price.index = df_price.index.values.astype(np.int64) // 10 ** 6
     df_mcap = df_price.copy()
-    
     for i in range(len(df_names)):
         print(50*"-")
-        print(df_names.name[i], "coingecko data extraction", i, "/", len(df_names)-1)
+        print(df_names.name[i], "coingecko data extraction", i+1, "/", len(df_names))
         try:
             r = cg.get_coin_market_chart_by_id(df_names.id[i], "USD", 5000, interval = "daily")
         except:
@@ -80,13 +99,19 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
     return (df_price, df_mcap)
 
 
-
-
-    
 if __name__ == "__main__":
+    if GET_NAMES == 1:
+        print("Getting tokens names from 1inch api...")
+        df = get_tokens_1inch()
+        print("Saving to postgres...")
+        pg.send_to_postgres(df)
+    print("Getting prices and market capitalizations from Coingecko...")
     df_price, df_mcap = get_prices(df_names)
+    print("Clean the dataframes...")
     df_price = clean_df(df_price)
     df_mcap = clean_df(df_mcap)
+    print("Sending to postgres...")
     pg.send_to_postgres(df_price, table_name="hist_prices", index=True)
     pg.send_to_postgres(df_mcap, table_name="hist_mcap", index=True)
     pg.send_to_postgres(df_names)
+    print("DONE")
