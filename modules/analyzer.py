@@ -103,6 +103,8 @@ class Analyzer():
             #low volatility
             nbr_col = len(df_returns.columns)
             nbr_cryptos_left = (math.floor((self.cryptos_taken_percentage/100)*nbr_col))
+            if nbr_cryptos_left == 0:
+                nbr_cryptos_left=1
             self.nbr_cryptos_left = nbr_cryptos_left
             self.weight = round(1 / nbr_cryptos_left, 6)
             self.weights = df_rank.copy()
