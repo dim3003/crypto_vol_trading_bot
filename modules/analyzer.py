@@ -95,7 +95,7 @@ class Analyzer():
             df_temp = df_returns.copy()
             for col in df_returns.columns:
                 df_temp[col] = 0
-            df_temp["wrappedbtc_usd"] = 1
+            df_temp["Wrapped BTC"] = 1
             self.weights = df_temp
         else:
             #ranks crypto according to vola
@@ -228,8 +228,8 @@ class Analyzer():
         df_gas_price = pd.read_csv("modules/gas_price_gwei.csv") #gas price as csv from https://polygonscan.com/chart/gasprice TO BE UPDATED BY USING SELENIUM
         df_gas_price.set_index(pd.to_datetime(df_gas_price["Date(UTC)"]), inplace=True)
         df_gas_price = df_gas_price.iloc[:, 2].rename("wei")
-        df_gas_price = pd.merge(self.df_price["matic_usd"], df_gas_price, right_index=True, left_index=True, how="left")
-        df_gas_price["gas_fee_usd"] = df_gas_price.matic_usd * df_gas_price.wei * 10e-18 * 21000 #21000 is basic gas limit cost
+        df_gas_price = pd.merge(self.df_price["MATIC"], df_gas_price, right_index=True, left_index=True, how="left")
+        df_gas_price["gas_fee_usd"] = df_gas_price.MATIC * df_gas_price.wei * 10e-18 * 21000 #21000 is basic gas limit cost
         df_gas_price = df_gas_price["gas_fee_usd"].dropna()
         #combine with the number of trades
         df_nbr_trades = pd.DataFrame(self.nbr_trades, index=self.nbr_trades.index, columns=["nbr_trades"])

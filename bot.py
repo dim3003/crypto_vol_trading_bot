@@ -48,7 +48,6 @@ class Bot():
             return result
         r = result["tokens"]
         r = pd.DataFrame(r).T.loc[:, ["name", "address", "decimals"]]
-        r.name = r.name + "_USD" # TO BE REMOVED
         r.set_index(r["name"], inplace=True)
         r.drop("name", axis=1, inplace=True)
         self.tokens = r
