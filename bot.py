@@ -15,13 +15,14 @@ class Bot():
         "arbitrum": "42161",
         "gnosis": "100",
         "avalanche": "43114",
-        "fantom": "250"
+        "fantom": "250",
     }
 
-    def __init__(self, from_address=None, chain='polygon', version='v5.0'):
+    def __init__(self, from_address=None, chain='polygon', version='v5.0', slippage=5):
         self.from_address = from_address
         self.chain_id = self.chains[chain]
         self.version = version
+        self.slippage = slippage
 
     @staticmethod
     def _get(url, params=None, headers=None):
@@ -67,17 +68,14 @@ class Bot():
         Calls the swap api endpoint. Allows for the creation of transactions on the 1inch protocol.
         """
         tokens = self.get_tokens()
-        print(tokens.loc[from_token_name])
         fromTokenAddress = tokens.loc[from_token_name, "address"]
         toTokenAddress = tokens.loc[to_token_name, "address"]
         decimals = tokens.loc[from_token_name, "decimals"]
         amount_in_wei = amount * 10 ** decimals
         
-
         url = f'{self.base_url}/{self.version}/{self.chain_id}/swap'
         url = url + f'?fromTokenAddress={fromTokenAddress}&toTokenAddress={toTokenAddress}&amount={amount_in_wei}'
-        print(url)
-        #url = url + f'&fromAddress={send_address}&slippage={slippage}'
+        url = url + f'&fromAddress={self.from_address}&slippage={self.slippage}'
         if kwargs is not None:
             result = self._get(url, params=kwargs)
         else:
@@ -86,7 +84,8 @@ class Bot():
 
 
 if __name__ == "__main__":
-    bot = Bot()
+    bot = Bot(from_address="0xf8464447C0496f82d782Bf107d68C5556BcC6816", slippage=5)
     print(bot.healthcheck())
     df = pg.get_postgres(table_name="hist_prices", index_col="index")
-    bot.get_swap(from_token_name=df.columns[4], to_token_name=df.columns[12], amount=1, slippage=0.05)
+    #Use an address that has got a lot of the tokens to be swapped to create the transaction and then create the same address on ganache to actually broadcast it on local network 
+    bot.get_swap(from_token_name="Ether", to_token_name=df.columns[12], amount=1, slippage=0.05)
