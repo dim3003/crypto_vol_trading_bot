@@ -63,6 +63,28 @@ class Bot():
         r = self._get(url)
         return r["status"]
 
+
+    #THOSE FUNCTIONS ARE TO BE DONE
+    def get_allowance(self, token_name, wallet_address=None, **kwargs):
+        """
+        Calls the approve/allowance API endpoint. Gets the amount which is approved by the protocol to be spent.
+        """
+        if wallet_address == None:
+            wallet_address = self.from_address
+        
+        tokens = self.get_tokens()
+        TokenAddress = tokens.loc[token_name, "address"]
+        url = f'{self.base_url}/{self.version}/{self.chain_id}/approve/allowance'
+        url = url + f'?tokenAddress={TokenAddress}&walletAddress={wallet_address}'
+        if kwargs is not None:
+            result = self._get(url, params=kwargs)
+        else:
+            result = self._get(url)
+        return result
+
+    def approve_transaction(self, token_name):
+        pass
+
     def get_swap(self, from_token_name, to_token_name, amount, slippage, decimal=18, **kwargs):
         """
         Calls the swap api endpoint. Allows for the creation of transactions on the 1inch protocol.
@@ -84,8 +106,9 @@ class Bot():
 
 
 if __name__ == "__main__":
-    bot = Bot(from_address="0xf8464447C0496f82d782Bf107d68C5556BcC6816", slippage=5)
+    bot = Bot(from_address="0x0f0c716b007c289c0011e470cc7f14de4fe9fc80", slippage=5)
     print(bot.healthcheck())
     df = pg.get_postgres(table_name="hist_prices", index_col="index")
     #Use an address that has got a lot of the tokens to be swapped to create the transaction and then create the same address on ganache to actually broadcast it on local network 
+    print(bot.get_allowance(token_name="Ether"))
     bot.get_swap(from_token_name="Ether", to_token_name=df.columns[12], amount=1, slippage=0.05)
