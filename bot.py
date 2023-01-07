@@ -23,6 +23,7 @@ class Bot():
         self.chain_id = self.chains[chain]
         self.version = version
         self.slippage = slippage
+        self.tokens = self.get_tokens()
 
     @staticmethod
     def _get(url, params=None, headers=None):
@@ -51,8 +52,7 @@ class Bot():
         r = pd.DataFrame(r).T.loc[:, ["name", "address", "decimals"]]
         r.set_index(r["name"], inplace=True)
         r.drop("name", axis=1, inplace=True)
-        self.tokens = r
-        return self.tokens
+        return r
 
     def healthcheck(self):
         """
@@ -64,15 +64,13 @@ class Bot():
         return r["status"]
 
 
-    #THOSE FUNCTIONS ARE TO BE DONE
     def get_allowance(self, token_name, wallet_address=None, **kwargs):
         """
         Calls the approve/allowance API endpoint. Gets the amount which is approved by the protocol to be spent.
         """
         if wallet_address == None:
             wallet_address = self.from_address
-        
-        tokens = self.get_tokens()
+        tokens = self.tokens
         TokenAddress = tokens.loc[token_name, "address"]
         url = f'{self.base_url}/{self.version}/{self.chain_id}/approve/allowance'
         url = url + f'?tokenAddress={TokenAddress}&walletAddress={wallet_address}'
@@ -82,14 +80,26 @@ class Bot():
             result = self._get(url)
         return result
 
-    def approve_transaction(self, token_name):
-        pass
+    def approve_transaction(self, token_name, amount=None):
+        """
+        Calls the approve/transaction api endpoint is used to allow the spending of tokens.
+        """
+        tokens = self.tokens
+        TokenAddress = tokens.loc[token_name, "address"]
+        url = f'{self.base_url}/{self.version}/{self.chain_id}/approve/transaction'
+        if amount is None:
+            url = url + f"?tokenAddress={TokenAddress}"
+        else:
+            amount_in_wei = amount * 10 ** tokens.loc[token_name, "decimals"]
+            url = url + f"?tokenAddress={TokenAddress}&amount={amount_in_wei}"
+        result = self._get(url)
+        return result
 
     def get_swap(self, from_token_name, to_token_name, amount, slippage, decimal=18, **kwargs):
         """
         Calls the swap api endpoint. Allows for the creation of transactions on the 1inch protocol.
         """
-        tokens = self.get_tokens()
+        tokens = self.tokens
         fromTokenAddress = tokens.loc[from_token_name, "address"]
         toTokenAddress = tokens.loc[to_token_name, "address"]
         decimals = tokens.loc[from_token_name, "decimals"]
@@ -111,4 +121,6 @@ if __name__ == "__main__":
     df = pg.get_postgres(table_name="hist_prices", index_col="index")
     #Use an address that has got a lot of the tokens to be swapped to create the transaction and then create the same address on ganache to actually broadcast it on local network 
     print(bot.get_allowance(token_name="Ether"))
-    bot.get_swap(from_token_name="Ether", to_token_name=df.columns[12], amount=1, slippage=0.05)
+    print(bot.approve_transaction(token_name="Ether", amount=1000000000000000000))
+    print(bot.get_allowance(token_name="Ether"))
+    #bot.get_swap(from_token_name="Ether", to_token_name=df.columns[12], amount=1, slippage=0.05)
