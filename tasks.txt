@@ -1,11 +1,8 @@
 II CREATE BOT
-    2. write simple transaction with web3.py
-    3. try it with ganache fork
-    3. create data fetching for the class
-    4. create order giving in the class
-    5. try it out with a ganache fork
-    6. create tests for daily function
-    7. launch on polygon mainnet 
+    1. find an address (pk) which has an allowance for 1inch and can spend matic
+    2. create the swap transaction
+    3. broadcast it on ganache with web3.py
+    4. view results
 
 SQL COMMANDS:
 

@@ -4,7 +4,7 @@ import requests, json
 from web3 import Web3
 from modules import postgres as pg
 
-class Bot():
+class OneInch():
     base_url = 'https://api.1inch.exchange'
 
     chains = {
@@ -115,12 +115,22 @@ class Bot():
         return result
 
 
+class HelperWeb3():
+    def __init__(self, public_key, private_key, rpc_url='http://127.0.0.1:8545'):
+        self.public_key = public_key
+        self.private_key = private_key
+    
+    def __str__(self):
+        return self.public_key
+
 if __name__ == "__main__":
-    bot = Bot(from_address="0x0f0c716b007c289c0011e470cc7f14de4fe9fc80", slippage=5)
+    """
+    Addresses:
+    - 0x5a4069c86f49d2454cf4ea9cda5d3bcb0f340c4b #an address found on polygon scan allowed to spend matic
+    - 0x453699319d2866dc8F969F06A07eE3ee9a92306e #my Metamask test address on polygon
+    """
+    bot = OneInch(from_address="0x453699319d2866dc8F969F06A07eE3ee9a92306e", slippage=5)
     print(bot.healthcheck())
     df = pg.get_postgres(table_name="hist_prices", index_col="index")
-    #Use an address that has got a lot of the tokens to be swapped to create the transaction and then create the same address on ganache to actually broadcast it on local network 
-    print(bot.get_allowance(token_name="Ether"))
-    print(bot.approve_transaction(token_name="Ether", amount=1000000000000000000))
-    print(bot.get_allowance(token_name="Ether"))
-    #bot.get_swap(from_token_name="Ether", to_token_name=df.columns[12], amount=1, slippage=0.05)
+    print(bot.get_allowance(token_name="MATIC"))
+    
