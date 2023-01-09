@@ -119,18 +119,34 @@ class HelperWeb3():
     def __init__(self, public_key, private_key, rpc_url='http://127.0.0.1:8545'):
         self.public_key = public_key
         self.private_key = private_key
+        self.rpc_url = rpc_url
+        self.w3 = self.connect()
     
     def __str__(self):
         return self.public_key
 
+    def connect(self):
+        if self.rpc_url[0:3] == "wss":
+            w3 = Web3(Web3.WebsocketProvider(self.rpc_url)) 
+        elif self.rpc_url[0:4] == "http":
+            w3 = Web3(Web3.HTTPProvider(self.rpc_url))
+        else:
+            w3 = Web3(Web3.IPCProvider(self.rpc_url))
+        if w3.isConnected():
+            print("Connected to the blockchain with RPC:", self.rpc_url)
+            return w3
+        else:
+            print("Connection error please check.")
+        
 if __name__ == "__main__":
     """
     Addresses:
     - 0x5a4069c86f49d2454cf4ea9cda5d3bcb0f340c4b #an address found on polygon scan allowed to spend matic
     - 0x453699319d2866dc8F969F06A07eE3ee9a92306e #my Metamask test address on polygon
-    """
+    
     bot = OneInch(from_address="0x453699319d2866dc8F969F06A07eE3ee9a92306e", slippage=5)
     print(bot.healthcheck())
     df = pg.get_postgres(table_name="hist_prices", index_col="index")
     print(bot.get_allowance(token_name="MATIC"))
-    
+    """
+    helper = HelperWeb3(public_key="0x5a4069c86f49d2454cf4ea9cda5d3bcb0f340c4b", private_key="")
