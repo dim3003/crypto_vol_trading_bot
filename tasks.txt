@@ -1,5 +1,4 @@
 II CREATE BOT
-    1. create command to connect with python web3
     2. create command to check the account balance in all cryptos available on 1inch
     3. try a swap on ganache with account that can send matic
 

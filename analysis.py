@@ -13,6 +13,6 @@ for i in range(10,60,10):
     print(low_vol)
 
 #high volatility
-for i in range(10,60,10):
+for i in range(8,60,200):
     high_vol = Analyzer(df, bench_returns=btc.returns, strategy="HIGH_VOLATILITY", cryptos_taken_percentage=i)
     print(high_vol)

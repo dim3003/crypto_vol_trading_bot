@@ -137,16 +137,23 @@ class HelperWeb3():
             return w3
         else:
             print("Connection error please check.")
+
+    
+    def get_balance(self):
+        contract = w3.eth.contract(contract_address, abi=ABI)
+        return self.w3.eth.get_balance(self.public_key)
         
 if __name__ == "__main__":
     """
     Addresses:
-    - 0x5a4069c86f49d2454cf4ea9cda5d3bcb0f340c4b #an address found on polygon scan allowed to spend matic
+    - 0xA97578DD7ad20Ba12D42cB4100616f7d3797a72F #an address found on polygon scan allowed to spend matic
     - 0x453699319d2866dc8F969F06A07eE3ee9a92306e #my Metamask test address on polygon
     
-    bot = OneInch(from_address="0x453699319d2866dc8F969F06A07eE3ee9a92306e", slippage=5)
-    print(bot.healthcheck())
-    df = pg.get_postgres(table_name="hist_prices", index_col="index")
-    print(bot.get_allowance(token_name="MATIC"))
     """
-    helper = HelperWeb3(public_key="0x5a4069c86f49d2454cf4ea9cda5d3bcb0f340c4b", private_key="")
+    bot = OneInch(from_address="0xA97578DD7ad20Ba12D42cB4100616f7d3797a72F", slippage=5)
+    df = pg.get_postgres(table_name="hist_prices", index_col="index")
+#    print(bot.get_allowance(token_name="MATIC"))
+    print(df)
+    helper = HelperWeb3(public_key="0xA97578DD7ad20Ba12D42cB4100616f7d3797a72F", private_key="")
+    df_names = pg.get_postgres()
+    print(df_names)

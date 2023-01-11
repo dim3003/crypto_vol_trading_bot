@@ -109,10 +109,10 @@ class Analyzer():
             self.weight = round(1 / nbr_cryptos_left, 6)
             self.weights = df_rank.copy()
             if self.strategy == "LOW_VOLATILITY":
-                self.weights[self.weights > self.nbr_cryptos_left] = 0
+                self.weights[self.weights > (self.nbr_cryptos_left-1)] = 0
                 self.weights[self.weights != 0] = self.weight
             elif self.strategy == "HIGH_VOLATILITY":
-                self.weights[self.weights < (nbr_col - self.nbr_cryptos_left)] = 0
+                self.weights[self.weights < (nbr_col - self.nbr_cryptos_left + 1)] = 0
                 self.weights[self.weights != 0] = self.weight
         #calculate returns
         returns = df_returns * self.weights
