@@ -2,11 +2,14 @@ import pandas as pd
 import numpy as np
 import requests, json, os, time
 from modules import postgres as pg
+from modules import fetch_abi
 from datetime import date, datetime
 from pycoingecko import CoinGeckoAPI
 pd.set_option('display.max_rows', 100)
 
-GET_NAMES = 1 #set this to 1 if you want to refetch the cryptos names available from 1inch api
+GET_NAMES = 0 #set this to 1 if you want to refetch the cryptos names available from 1inch api
+GET_PRICES = 0 #set this to 1 if you want to fetch price data on coingecko
+GET_ABI = 1 #set this to 1 if you want to fetch ABI data for 1inch coins contracts
 CHAIN = "Polygon POS"
 
 #set up coingecko API
@@ -56,8 +59,17 @@ def get_tokens_1inch(save=0):
     df.dropna(how="all", inplace=True)
     return df
 
+def get_abis(token_names, contract_addresses):
+    if len(token_names) != len(contract_addresses):
+        print("Token names and contract addresses arrays are not of the same length please verify.")
+        return 0
+    for i, name in enumerate(token_names):
+        print(i)
+        print(name)
+        
+
 def clean_df(df):
-    """ removes na rows and lowercases/removes empty columns name """
+    """ removes na rows and changes index to datetime """
     df.index = pd.to_datetime(df.index, unit='ms')
     df = df.dropna(how="all")
     return df
@@ -96,18 +108,22 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
 
 
 if __name__ == "__main__":
+    if GET_ABI == 1:
+        print("Getting the ABIs...")
+        get_abis(df_names.names, df_names.address)
+
     if GET_NAMES == 1:
         print("Getting tokens names from 1inch api...")
         df = get_tokens_1inch()
         print("Saving to postgres...")
         pg.send_to_postgres(df)
-    print("Getting prices and market capitalizations from Coingecko...")
-    df_price, df_mcap = get_prices(df_names)
-    print("Clean the dataframes...")
-    df_price = clean_df(df_price)
-    df_mcap = clean_df(df_mcap)
-    print("Sending to postgres...")
-    pg.send_to_postgres(df_price, table_name="hist_prices", index=True)
-    pg.send_to_postgres(df_mcap, table_name="hist_mcap", index=True)
-    pg.send_to_postgres(df_names)
+    if GET_PRICES == 1:
+        print("Getting prices and market capitalizations from Coingecko...")
+        df_price, df_mcap = get_prices(df_names)
+        print("Clean the dataframes...")
+        df_price = clean_df(df_price)
+        df_mcap = clean_df(df_mcap)
+        print("Sending to postgres...")
+        pg.send_to_postgres(df_price, table_name="hist_prices", index=True)
+        pg.send_to_postgres(df_mcap, table_name="hist_mcap", index=True)
     print("DONE")

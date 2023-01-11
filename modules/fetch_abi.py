@@ -14,8 +14,5 @@ def get_abi(contract_address, api_key=POLYSCAN_API_KEY):
     r = r.json()["result"]
     return r
 
-
-
-
 if __name__ == '__main__':
     print(get_abi("0x0000000000000000000000000000000000001010"))
