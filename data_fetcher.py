@@ -7,8 +7,8 @@ from datetime import date, datetime
 from pycoingecko import CoinGeckoAPI
 pd.set_option('display.max_rows', 100)
 
-GET_NAMES = 0 #set this to 1 if you want to refetch the cryptos names available from 1inch api
-GET_PRICES = 0 #set this to 1 if you want to fetch price data on coingecko
+GET_NAMES = 1 #set this to 1 if you want to refetch the cryptos names available from 1inch api
+GET_PRICES = 1 #set this to 1 if you want to fetch price data on coingecko
 GET_ABI = 1 #set this to 1 if you want to fetch ABI data for 1inch coins contracts
 CHAIN = "Polygon POS"
 
@@ -64,9 +64,7 @@ def get_abis(token_names, contract_addresses):
         print("Token names and contract addresses arrays are not of the same length please verify.")
         return 0
     for i, name in enumerate(token_names):
-        print(i)
-        print(name)
-        
+       pass 
 
 def clean_df(df):
     """ removes na rows and changes index to datetime """
@@ -81,7 +79,6 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
     df_price = pd.DataFrame(index=pd.date_range(start='1/1/2012', end=date.today()))
     df_price.index = df_price.index.values.astype(np.int64) // 10 ** 6
     df_mcap = df_price.copy()
-    print(df_names)
     for i in range(len(df_names)):
         print(50*"-")
         print(df_names.name[i], "coingecko data extraction", i+1, "/", len(df_names))
@@ -110,8 +107,7 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
 if __name__ == "__main__":
     if GET_ABI == 1:
         print("Getting the ABIs...")
-        get_abis(df_names.names, df_names.address)
-
+        get_abis(df_names.name, df_names.address)
     if GET_NAMES == 1:
         print("Getting tokens names from 1inch api...")
         df = get_tokens_1inch()
