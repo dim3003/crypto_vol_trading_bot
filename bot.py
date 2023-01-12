@@ -139,9 +139,29 @@ class HelperWeb3():
             print("Connection error please check.")
 
     
-    def get_balance(self):
-        contract = w3.eth.contract(contract_address, abi=ABI)
-        return self.w3.eth.get_balance(self.public_key)
+    def get_balances(self, addresses, names, address=None):
+        """
+        Returns a pandas dataframe of balance of the account by giving a list of contracts and names.
+        Works for the contracts tradable of 1inch
+        """
+        if address == None:
+            address = self.public_key
+        if len(addresses) != len(names):
+            print("Length of contracts is not the same as length of names variable.")
+            return 0
+        balances = pd.Series(dtype=float)
+        for i, address in enumerate(addresses):
+            with open(f"abi/{names[i]}.json") as f:
+                abi = f.read()
+                abi = json.loads(abi)
+            address = self.w3.toChecksumAddress(address)
+            contract = self.w3.eth.contract(address, abi=abi)
+            decimals = contract.functions.decimals().call()
+            decimals = 10 ** decimals
+            value = contract.functions.balanceOf(self.public_key).call() // decimals
+            balances = balances.append(pd.Series(value, index=[names[i]]))
+            print(value, names[i])
+        return balances
         
 if __name__ == "__main__":
     """
@@ -152,8 +172,10 @@ if __name__ == "__main__":
     """
     bot = OneInch(from_address="0xA97578DD7ad20Ba12D42cB4100616f7d3797a72F", slippage=5)
     df = pg.get_postgres(table_name="hist_prices", index_col="index")
-#    print(bot.get_allowance(token_name="MATIC"))
-    print(df)
+    #print(bot.get_allowance(token_name="MATIC"))
     helper = HelperWeb3(public_key="0xA97578DD7ad20Ba12D42cB4100616f7d3797a72F", private_key="")
     df_names = pg.get_postgres()
-    print(df_names)
+    df_names.loc[df_names.symbol == "MATIC", "address"] = "0x0000000000000000000000000000000000001010"
+    df_names.loc[df_names.symbol == "deUSDC", "address"] = "0xda43bfd7ecc6835aa6f1761ced30b986a574c0d2"
+    df_names.loc[df_names.symbol == "NFTY", "address"] = "0xcc081220542a60a8ea7963c4f53d522b503272c1"
+    helper.get_balances(addresses=df_names.address, names=df_names.name)
