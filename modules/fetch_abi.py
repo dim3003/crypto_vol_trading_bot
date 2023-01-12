@@ -7,7 +7,9 @@ POLYSCAN_API_KEY = os.environ["POLYSCAN_API_KEY"]
 POLYGONSCAN_ABI_ENDPOINT = 'https://api.polygonscan.com/api?module=contract&action=getabi'
 
 def get_abi(contract_address, api_key=POLYSCAN_API_KEY):
-    # Exports contract ABI in JSON
+    """
+    Calls Polygonscan contract abi endpoint with given contract address and api_key
+    """
     url = POLYGONSCAN_ABI_ENDPOINT
     url = url + f'&address={contract_address}&apikey={api_key}'
     r = requests.get(url)
