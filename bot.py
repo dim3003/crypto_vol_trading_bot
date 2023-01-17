@@ -176,8 +176,10 @@ class HelperWeb3():
                 missing_balanceOf += 1
             balances = pd.concat([balances, pd.Series(value, index=[names[i]])])
         
+        balances.sort_values(inplace=False)
         print("Tokens missing balanceOf function", missing_balanceOf)
         print("Tokens missing decimals function", missing_decimals)
+        self.balances = balances
         return balances
         
 if __name__ == "__main__":

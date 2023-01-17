@@ -8,7 +8,7 @@ from pycoingecko import CoinGeckoAPI
 pd.set_option('display.max_rows', 100)
 
 GET_NAMES = 1 #set this to 1 if you want to refetch the cryptos names available from 1inch api
-GET_PRICES = 0 #set this to 1 if you want to fetch price data on coingecko
+GET_PRICES = 1 #set this to 1 if you want to fetch price data on coingecko
 GET_ABI = 1 #set this to 1 if you want to fetch ABI data for 1inch coins contracts on polygonscan
 CHAIN = "Polygon POS"
 
@@ -119,8 +119,8 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
 if __name__ == "__main__":
     if GET_ABI == 1:
         print("Getting the ABIs...")
-        #get_abis(df_names.name, df_names.address)
-        get_abis(["THX Network (PoS)", "Global Coin Research (PoS)", "Carbon (PoS)"],["0x2934b36ca9A4B31E633C5BE670C8C8b28b6aA015", "0xa69d14d6369e414a32a5c7e729b7afbafd285965", "0x89ef0900b0a6b5548ab2ff58ef588f9433b5fcf5"])
+        get_abis(df_names.name, df_names.address)
+        #get_abis(["THX Network (PoS)", "Global Coin Research (PoS)", "Carbon (PoS)"],["0x2934b36ca9A4B31E633C5BE670C8C8b28b6aA015", "0xa69d14d6369e414a32a5c7e729b7afbafd285965", "0x89ef0900b0a6b5548ab2ff58ef588f9433b5fcf5"])
     if GET_NAMES == 1:
         print("Getting tokens names from 1inch api...")
         df = get_tokens_1inch()
