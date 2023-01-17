@@ -8,10 +8,9 @@ POLYSCAN_API_KEY = os.environ["POLYSCAN_API_KEY"]
 POLYGONSCAN_ABI_ENDPOINT = 'https://api.polygonscan.com/api?module=contract&action=getabi'
 POLYGONSCAN_TOKEN = 'https://polygonscan.com/token/'
 
-def get_abi(contract_address, api_key=POLYSCAN_API_KEY):
+def check_proxy(contract_address):
     """
-    Calls Polygonscan contract abi endpoint with given contract address and api_key
-    Checks if there is a proxy implementation first
+    Checks if the contract is a proxy and has an implementation on another contract with Polygonscan
     """
     #check with bs4 if there is an abi implementation as the contract can be a proxy
     url_token = POLYGONSCAN_TOKEN + contract_address + "#readProxyContract"
@@ -20,6 +19,16 @@ def get_abi(contract_address, api_key=POLYSCAN_API_KEY):
     proxy_span = soup.find(id='ContentPlaceHolder1_readProxyMessage')
     if proxy_span.find("a"):
         contract_address = proxy_span.find("a").text
+    return contract_address
+
+def get_abi(contract_address, api_key=POLYSCAN_API_KEY):
+    """
+    Calls Polygonscan contract abi endpoint with given contract address and api_key
+    Checks if there is a proxy implementation first
+    """
+    #check for proxies
+    contract_address = check_proxy(contract_address)
+    contract_address = check_proxy(contract_address) #do it twice as there are contracts with many layers
     #get the abi 
     url = POLYGONSCAN_ABI_ENDPOINT
     url = url + f'&address={contract_address}&apikey={api_key}'

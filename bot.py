@@ -150,17 +150,34 @@ class HelperWeb3():
             print("Length of contracts is not the same as length of names variable.")
             return 0
         balances = pd.Series(dtype=float)
+        missing_decimals = 0
+        missing_balanceOf = 0
         for i, address in enumerate(addresses):
+            print((i+1), "out of", len(addresses), names[i], address, "balance extraction", )
             with open(f"abi/{names[i]}.json") as f:
                 abi = f.read()
                 abi = json.loads(abi)
             address = self.w3.toChecksumAddress(address)
             contract = self.w3.eth.contract(address, abi=abi)
-            decimals = contract.functions.decimals().call()
-            decimals = 10 ** decimals
-            value = contract.functions.balanceOf(self.public_key).call() // decimals
-            balances = balances.append(pd.Series(value, index=[names[i]]))
-            print(value, names[i])
+            try:
+                decimals_raw = contract.functions.decimals().call()
+            except Exception as err:
+                print(err)
+                print("Missing decimals function for", names[i], address)
+                decimals_raw = 18
+                missing_decimals += 1
+            decimals = 10 ** decimals_raw
+            try:
+                value = contract.functions.balanceOf(self.public_key).call() // decimals
+            except Exception as err:
+                print(err)
+                print("Missing balanceOf function for", names[i], address)
+                decimals_raw = 18
+                missing_balanceOf += 1
+            balances = pd.concat([balances, pd.Series(value, index=[names[i]])])
+        
+        print("Tokens missing balanceOf function", missing_balanceOf)
+        print("Tokens missing decimals function", missing_decimals)
         return balances
         
 if __name__ == "__main__":
@@ -168,14 +185,10 @@ if __name__ == "__main__":
     Addresses:
     - 0xA97578DD7ad20Ba12D42cB4100616f7d3797a72F #an address found on polygon scan allowed to spend matic
     - 0x453699319d2866dc8F969F06A07eE3ee9a92306e #my Metamask test address on polygon
-    
     """
-    bot = OneInch(from_address="0xA97578DD7ad20Ba12D42cB4100616f7d3797a72F", slippage=5)
-    df = pg.get_postgres(table_name="hist_prices", index_col="index")
-    #print(bot.get_allowance(token_name="MATIC"))
     helper = HelperWeb3(public_key="0xA97578DD7ad20Ba12D42cB4100616f7d3797a72F", private_key="")
     df_names = pg.get_postgres()
     df_names.loc[df_names.symbol == "MATIC", "address"] = "0x0000000000000000000000000000000000001010"
     df_names.loc[df_names.symbol == "deUSDC", "address"] = "0xda43bfd7ecc6835aa6f1761ced30b986a574c0d2"
     df_names.loc[df_names.symbol == "NFTY", "address"] = "0xcc081220542a60a8ea7963c4f53d522b503272c1"
-    helper.get_balances(addresses=df_names.address, names=df_names.name)
+    print(helper.get_balances(addresses=df_names.address, names=df_names.name))

@@ -7,9 +7,9 @@ from datetime import date, datetime
 from pycoingecko import CoinGeckoAPI
 pd.set_option('display.max_rows', 100)
 
-GET_NAMES = 0 #set this to 1 if you want to refetch the cryptos names available from 1inch api
+GET_NAMES = 1 #set this to 1 if you want to refetch the cryptos names available from 1inch api
 GET_PRICES = 0 #set this to 1 if you want to fetch price data on coingecko
-GET_ABI = 1 #set this to 1 if you want to fetch ABI data for 1inch coins contracts
+GET_ABI = 1 #set this to 1 if you want to fetch ABI data for 1inch coins contracts on polygonscan
 CHAIN = "Polygon POS"
 
 #set up coingecko API
@@ -57,6 +57,15 @@ def get_tokens_1inch(save=0):
     #some data cleaning...
     df = df.convert_dtypes()
     df.dropna(how="all", inplace=True)
+    #remove wrapped Ixs Token, KastaToken, Blockchain Monster Coin, Chain Games, Wrapped Sol as contract is unverified on polygonscan
+    #remove dHEDGE Stablecoin, Polygon Ecosystem Index as implementation abi has no decimals/balanceof function
+    df = df.drop(["0x1ba17c639bdaecd8dc4aac37df062d17ee43a1b8",
+                "0xbae28251b2a4e621aa7e20538c06dee010bc06de",
+                "0x235737dbb56e8517391473f7c964db31fa6ef280",
+                "0xc10358f062663448a3489fc258139944534592ac",
+                "0xa9536b9c75a9e0fae3b56a96ac8edf76abc91978",
+                "0xd55fce7cdab84d84f2ef3f99816d765a2a94a509",
+                "0xd93f7e271cb87c23aaa73edc008a79646d1f9912"])
     return df
 
 def get_abis(token_names, contract_addresses):
@@ -110,7 +119,8 @@ def get_prices(df_names=df_names, cg_chain_id=cg_chain_id, cg=cg):
 if __name__ == "__main__":
     if GET_ABI == 1:
         print("Getting the ABIs...")
-        get_abis(df_names.name, df_names.address)
+        #get_abis(df_names.name, df_names.address)
+        get_abis(["THX Network (PoS)", "Global Coin Research (PoS)", "Carbon (PoS)"],["0x2934b36ca9A4B31E633C5BE670C8C8b28b6aA015", "0xa69d14d6369e414a32a5c7e729b7afbafd285965", "0x89ef0900b0a6b5548ab2ff58ef588f9433b5fcf5"])
     if GET_NAMES == 1:
         print("Getting tokens names from 1inch api...")
         df = get_tokens_1inch()
