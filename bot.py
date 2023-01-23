@@ -104,6 +104,7 @@ class OneInch():
     def get_swap(self, from_token_name, to_token_name, amount, slippage, decimal=18, **kwargs):
         """
         Calls the swap api endpoint. Allows for the creation of transactions on the 1inch protocol.
+        Slippage is in percentage so minimum 0 and max 50
         """
         tokens = self.tokens
         fromTokenAddress = tokens.loc[from_token_name, "address"]
@@ -255,8 +256,11 @@ class HelperWeb3():
         signed_tx = self.w3.eth.account.sign_message(raw_tx, private_key=self.private_key)
         return signed_tx
 
-    def send_transaction(signed_tx):
-        pass
+    def broadcast_tx(self, signed_tx, timeout=360):
+        tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        print(tx_hash.hex())
+        receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=timeout)
+        return receipt, tx_hash.hex()
 
 if __name__ == "__main__":
     """
@@ -265,9 +269,20 @@ if __name__ == "__main__":
     - 0x453699319d2866dc8F969F06A07eE3ee9a92306e #my Metamask test address on polygon
     - 0xF9e5ca0FA7F2b8A07d2aC4Acb40F60cbBb7A6037 #ganache random address
     """
-    helper = HelperWeb3(public_key="0xF9e5ca0FA7F2b8A07d2aC4Acb40F60cbBb7A6037")
+    #test transaction on 1inch.py through API
+    from_address = "0xA97578DD7ad20Ba12D42cB4100616f7d3797a72F"
     df_names = pg.get_postgres()
     df_names.loc[df_names.symbol == "MATIC", "address"] = "0x0000000000000000000000000000000000001010"
     df_names.loc[df_names.symbol == "deUSDC", "address"] = "0xda43bfd7ecc6835aa6f1761ced30b986a574c0d2"
     df_names.loc[df_names.symbol == "NFTY", "address"] = "0xcc081220542a60a8ea7963c4f53d522b503272c1"
-    print(helper.get_balances(addresses=df_names.address, names=df_names.name))
+    # print(df_names.name)
+
+    one_inch = OneInch(from_address=from_address)
+    helper = HelperWeb3(public_key=from_address)
+
+    result = one_inch.get_swap(from_token_name="MATIC", to_token_name="Tether USD", amount=1, slippage=2) #can only create swaps with api so impossible to do this step through ganache
+    print(result)
+    
+    # print(helper.get_balances(addresses=df_names.address, names=df_names.name))
+
+
