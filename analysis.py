@@ -1,4 +1,5 @@
 from modules import postgres as pg
+from operator import itemgetter
 from modules.analyzer import Analyzer
 
 #get the data from postgres
@@ -8,11 +9,17 @@ btc = Analyzer(df)
 print(btc)
 
 #low volatility
-for i in range(10,60,10):
+returns_with_fees = []
+for i in range(1,101,1):
     low_vol = Analyzer(df, bench_returns=btc.returns, strategy="LOW_VOLATILITY", cryptos_taken_percentage=i)
-    print(low_vol)
+    returns_with_fees.append((low_vol.returns_with_fees, i))
+#print the one with the highest returns with no fee
+print(Analyzer(df, bench_returns=btc.returns, strategy="LOW_VOLATILITY", cryptos_taken_percentage=max(returns_with_fees, key=itemgetter(0))[1]))
 
 #high volatility
-for i in range(1,11,1):
+returns_with_fees = []
+for i in range(1,101,1):
     high_vol = Analyzer(df, bench_returns=btc.returns, strategy="HIGH_VOLATILITY", cryptos_taken_percentage=i)
-    print(high_vol)
+    returns_with_fees.append((high_vol.returns_with_fees, i))
+#print the one with the highest returns with no fee
+print(Analyzer(df, bench_returns=btc.returns, strategy="HIGH_VOLATILITY", cryptos_taken_percentage=max(returns_with_fees, key=itemgetter(0))[1]))
