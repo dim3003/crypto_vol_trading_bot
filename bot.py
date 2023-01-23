@@ -4,6 +4,11 @@ import requests, json
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from modules import postgres as pg
+from dotenv import load_dotenv
+
+#loads env variables 
+load_dotenv() 
+private_key = os.environ['PRIVATE_KEY']
 
 class OneInch():
     base_url = 'https://api.1inch.exchange'
@@ -127,23 +132,38 @@ class HelperWeb3():
         "avalanche": "43114",
         "fantom": "250"
     }
-    
+
     gas_oracle = "https://gas-price-api.1inch.io/v1.3/"
 
-    def __init__(self, public_key, private_key, rpc_url='http://127.0.0.1:8545'), chain_name='polygon':
+    def __init__(self, public_key, private_key=private_key, rpc_url='http://127.0.0.1:8545', chain_name='polygon'):
+        self.rpc_url = rpc_url
         self.w3 = self.connect()
-        if chain == 'polygon' or chain == 'avalanche':
+        if chain_name == 'polygon' or chain == 'avalanche':
             self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
         else:
             pass
         self.public_key = public_key
         self.private_key = private_key
-        self.rpc_url = rpc_url
         self.chain = chain_name
-        self.chain_id = chains[chain_name]
+        self.chain_id = self.chains[chain_name]
     
     def __str__(self):
         return self.public_key
+    
+    @staticmethod
+    def _get(url, params=None, headers=None):
+        """ Implements a get request """
+        try:
+            response = requests.get(url, params=params, headers=headers)
+            response.raise_for_status()
+            payload = response.json()
+        except requests.exceptions.ConnectionError as e:
+            print("ConnectionError when doing a GET request from {}".format(url))
+            payload = None
+        except requests.exceptions.HTTPError:
+            print("HTTPError {}".format(url))
+            payload = None
+        return payload
 
     def connect(self):
         if self.rpc_url[0:3] == "wss":
@@ -243,10 +263,11 @@ if __name__ == "__main__":
     Addresses:
     - 0xA97578DD7ad20Ba12D42cB4100616f7d3797a72F #an address found on polygon scan allowed to spend matic
     - 0x453699319d2866dc8F969F06A07eE3ee9a92306e #my Metamask test address on polygon
+    - 0xF9e5ca0FA7F2b8A07d2aC4Acb40F60cbBb7A6037 #ganache random address
     """
     helper = HelperWeb3(public_key="0xA97578DD7ad20Ba12D42cB4100616f7d3797a72F", private_key="")
     df_names = pg.get_postgres()
     df_names.loc[df_names.symbol == "MATIC", "address"] = "0x0000000000000000000000000000000000001010"
     df_names.loc[df_names.symbol == "deUSDC", "address"] = "0xda43bfd7ecc6835aa6f1761ced30b986a574c0d2"
     df_names.loc[df_names.symbol == "NFTY", "address"] = "0xcc081220542a60a8ea7963c4f53d522b503272c1"
-    print(helper.get_balances(addresses=df_names.address, names=df_names.name))
+    # print(helper.get_balances(addresses=df_names.address, names=df_names.name))
