@@ -180,7 +180,7 @@ class HelperWeb3():
             print("Connection error please check.")
 
     
-    def get_balances(self, addresses, names, address=None):
+    def get_balances(self, addresses, names, address=None, verbose=1):
         """
         Returns a pandas dataframe of balance of the account by giving a list of contracts and names.
         Works for the contracts tradable of 1inch
@@ -194,7 +194,8 @@ class HelperWeb3():
         missing_decimals = 0
         missing_balanceOf = 0
         for i, address in enumerate(addresses):
-            print((i+1), "out of", len(addresses), names[i], address, "balance extraction", )
+            if verbose:
+                print((i+1), "out of", len(addresses), names[i], address, "balance extraction", )
             with open(f"abi/{names[i]}.json") as f:
                 abi = f.read()
                 abi = json.loads(abi)
@@ -218,8 +219,9 @@ class HelperWeb3():
             balances = pd.concat([balances, pd.Series(value, index=[names[i]])])
         
         balances.sort_values(inplace=False)
-        print("Tokens missing balanceOf function", missing_balanceOf)
-        print("Tokens missing decimals function", missing_decimals)
+        if verbose:
+            print("Tokens missing balanceOf function", missing_balanceOf)
+            print("Tokens missing decimals function", missing_decimals)
         self.balances = balances
         return balances
 
@@ -252,7 +254,7 @@ class HelperWeb3():
             tx['gasPrice'] = int(tx['gasPrice'])
         return tx
     
-    def sign_transaction(raw_tx):
+    def sign_transaction(self, raw_tx):
         signed_tx = self.w3.eth.account.sign_message(raw_tx, private_key=self.private_key)
         return signed_tx
 
@@ -279,10 +281,14 @@ if __name__ == "__main__":
 
     one_inch = OneInch(from_address=from_address)
     helper = HelperWeb3(public_key=from_address)
-
-    result = one_inch.get_swap(from_token_name="MATIC", to_token_name="Tether USD", amount=1, slippage=2) #can only create swaps with api so impossible to do this step through ganache
-    print(result)
     
+    print(helper.get_balances(verbose=0, addresses=[df_names.loc[df_names.name == "MATIC", "address"].iloc[0], df_names.loc[df_names.name == "Tether USD", "address"].iloc[0]], names=["MATIC", "Tether USD"]))
+    result = one_inch.get_swap(from_token_name="MATIC", to_token_name="Tether USD", amount=1, slippage=2) #can only create swaps with api so impossible to do this step through ganache
+    result = helper.build_tx(result)
+    result = helper.sign_transaction(result)
+    result = helper.send_raw_transaction(result)
+    print(helper.get_balances(addresses=[df_names.loc[df_names.name == "MATIC", "address"].iloc[0], df_names.loc[df_names.name == "Tether USD", "address"].iloc[0]], names=["MATIC", "Tether USD"]))
+
     # print(helper.get_balances(addresses=df_names.address, names=df_names.name))
 
 
