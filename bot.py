@@ -181,7 +181,14 @@ class HelperWeb3():
         print("Tokens missing decimals function", missing_decimals)
         self.balances = balances
         return balances
-        
+    
+    def sign_transaction(raw_tx):
+        signed_tx = self.w3.eth.account.sign_message(raw_tx, private_key=self.private_key)
+        return signed_tx
+
+    def send_transaction(signed_tx):
+        pass
+
 if __name__ == "__main__":
     """
     Addresses:
