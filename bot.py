@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import requests, json
 from web3 import Web3
+from web3.middleware import geth_poa_middleware
 from modules import postgres as pg
 
 class OneInch():
@@ -116,11 +117,30 @@ class OneInch():
 
 
 class HelperWeb3():
-    def __init__(self, public_key, private_key, rpc_url='http://127.0.0.1:8545'):
+    chains = {
+        "ethereum": '1',
+        "binance": '56',
+        "polygon": "137",
+        "optimism": "10",
+        "arbitrum": "42161",
+        "gnosis": "100",
+        "avalanche": "43114",
+        "fantom": "250"
+    }
+    
+    gas_oracle = "https://gas-price-api.1inch.io/v1.3/"
+
+    def __init__(self, public_key, private_key, rpc_url='http://127.0.0.1:8545'), chain_name='polygon':
+        self.w3 = self.connect()
+        if chain == 'polygon' or chain == 'avalanche':
+            self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        else:
+            pass
         self.public_key = public_key
         self.private_key = private_key
         self.rpc_url = rpc_url
-        self.w3 = self.connect()
+        self.chain = chain_name
+        self.chain_id = chains[chain_name]
     
     def __str__(self):
         return self.public_key
@@ -181,6 +201,35 @@ class HelperWeb3():
         print("Tokens missing decimals function", missing_decimals)
         self.balances = balances
         return balances
+
+    def build_tx(self, raw_tx, speed='high'):
+        """
+        Cleans transaction parameters and sets the gas limit/price with the help of the inch oracle
+        """
+        nonce = self.w3.eth.getTransactionCount(self.public_key)
+        if 'tx' in raw_tx:
+            tx = raw_tx['tx']
+        else:
+            tx = raw_tx
+        if 'from' not in tx:
+            tx['from'] = self.w3.toChecksumAddress(self.public_key)
+        tx['to'] = self.w3.toChecksumAddress(tx['to'])
+        if 'gas' not in tx:
+            tx['gas'] = self.w3.eth.estimate_gas(tx)
+        tx['nonce'] = nonce
+        tx['chainId'] = int(self.chain_id)
+        tx['value'] = int(tx['value'])
+        tx['gas'] = int(tx['gas'] * 1.25)
+        if self.chain == 'ethereum' or self.chain == 'polygon' or self.chain == 'avalanche' or self.chain == 'gnosis':
+            gas = self._get(self.gas_oracle+self.chain_id)
+            # print(gas)
+            # gas = requests.get(self.gas_oracle, params=self.chain_id)
+            tx['maxPriorityFeePerGas'] = int(gas[speed]['maxPriorityFeePerGas'])
+            tx['maxFeePerGas'] = int(gas[speed]['maxFeePerGas'])
+            tx.pop('gasPrice')
+        else:
+            tx['gasPrice'] = int(tx['gasPrice'])
+        return tx
     
     def sign_transaction(raw_tx):
         signed_tx = self.w3.eth.account.sign_message(raw_tx, private_key=self.private_key)
