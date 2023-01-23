@@ -30,6 +30,7 @@ class Analyzer():
             self.bench_returns = bench_returns
         else:   
             self.bench_returns = self.returns
+        self.returns_with_fees = self.total_returns(self.returns_detailed()[1])
     
     def __str__(self, monthly_show=0):
         print(50*"=")
@@ -40,7 +41,7 @@ class Analyzer():
         print(50*"-")
         print(f"{'NUMBER OF DAYS':<15}{self.nbr_days:>35d}")
         print(f"{'NO FEE':<15}{self.total_returns():>35.2%}")
-        print(f"{'LIQ+SLIP FEE':<15}{self.total_returns(self.returns_detailed()[1]):>35.2%}")
+        print(f"{'LIQ+SLIP FEE':<15}{self.returns_with_fees:>35.2%}")
         print(f"{'VOLATILITY':<15}{self.returns.std():>35.2%}")
         print(f"{'MAX DD':<15}{self.returns.min():>35.2%}")
         print(f"{'SHARPE':<15}{self.sharpe():>35.4f}")
